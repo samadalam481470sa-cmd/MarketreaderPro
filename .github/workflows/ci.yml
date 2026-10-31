@@ -29,6 +29,7 @@ jobs:
           node-version: '22'
       - run: npm install --no-audit --no-fund
       - run: npm run verify
+      - run: sh -n scripts/start-unix.sh
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
