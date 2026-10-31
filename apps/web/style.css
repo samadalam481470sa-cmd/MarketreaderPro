@@ -43,3 +43,15 @@ main{max-width:1700px;padding:36px 37px}
 .backtest-result h3{font-size:22px}
 .backtest-result article{margin-top:15px}
 @media(max-width:750px){.backtest-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.portfolio-lab .eyebrow{display:block;font-size:11px;letter-spacing:1.4px;color:#68ddc6}
+.portfolio-lab form{margin-top:20px}
+.portfolio-lab-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+.risk-lab-metric{border:1px solid #2b435b;border-radius:10px;padding:14px;background:#132739}
+.risk-lab-metric small,.risk-lab-metric strong{display:block}.risk-lab-metric strong{font-size:21px;margin-top:10px}
+.portfolio-risk-result{margin-top:20px}.portfolio-risk-result article{margin:15px 0}
+.correlation-table{border-collapse:collapse;width:100%;max-width:100%;font-size:12px}
+.correlation-table td,.correlation-table th{border-bottom:1px solid #355067;padding:10px 8px;text-align:right}
+.correlation-table th:first-child{text-align:left}
+.portfolio-risk-result{overflow-x:auto}
+@media(max-width:750px){.portfolio-lab-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
