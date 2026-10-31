@@ -45,4 +45,30 @@ Turning the screen off does not necessarily suspend computing, but **sleep mode 
 - `MRP_RETENTION_DAYS` 1–3650, default 90.
 - To stop: Ctrl+C or stop the user-owned service. Delete local SQLite file only if you want to erase the locally accumulated public market history.
 
-This is a real standalone research companion; it is **not yet a desktop GUI, model training engine, autonomous trading agent, OS-integrated sleep scheduler or complete 50,000-line system**.
+This is a real standalone research companion; it is **not yet a desktop GUI, autonomous code-writing agent, OS-integrated sleep scheduler or complete 50,000-line system**.
+
+## Opt-in learning engine (v0.7)
+
+The learning engine is **disabled by default**. It learns a small linear model of the *next observed change in implied probability* using historical PUBLIC market snapshots. This is an experimental supervised baseline, not a frontier LLM, not a profitable trading model, and not an agent that learns programming by itself.
+
+```bash
+# One training pass on your existing local market history:
+MRP_GPU=auto python3 -m agent train
+
+# Keep collecting snapshots and train after each cycle:
+MRP_GPU=auto python3 -m agent run --learn
+
+# Explicit feedback on a market's research usefulness:
+python3 -m agent feedback kalshi MARKET-ID helpful
+python3 -m agent feedback kalshi MARKET-ID not-helpful
+
+# Produce a reviewable improvement plan WITHOUT changing source files:
+python3 -m agent propose
+```
+
+The model constructs features from *past* snapshots and holds out the latest 20% of examples for evaluation. It promotes new weights only if validation mean-squared error improves by at least 1% over a no-change baseline. Model weights, evaluation records, and explicit market feedback are stored in the local SQLite file. Feedback adjusts which signals appear first in `status`, not financial returns.
+
+PyTorch CUDA/MPS is used for GPU training when present. Small datasets often run more efficiently on CPU. Running `--learn` continuously does **not** guarantee improvement; insufficient data, overfitting, and distribution shifts are significant risks.
+
+### Code self-improvement safety boundary
+`python3 -m agent propose` generates a Markdown review proposal under `research-proposals/`. It does not execute generated code, edit tracked files, push to GitHub, install OS background jobs or bypass tests. User/developer approval remains necessary for applying any code changes. True sleep stops GPU processing; automatic resume requires a user-configured OS service.

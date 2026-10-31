@@ -26,6 +26,30 @@ CREATE TABLE IF NOT EXISTS research_signals(
  backend TEXT NOT NULL,
  PRIMARY KEY (source, market_id)
 );
+CREATE TABLE IF NOT EXISTS model_runs(
+ id INTEGER PRIMARY KEY AUTOINCREMENT,
+ created_at INTEGER NOT NULL,
+ status TEXT NOT NULL,
+ backend TEXT NOT NULL,
+ examples INTEGER NOT NULL,
+ baseline_mse REAL,
+ model_mse REAL,
+ weights_json TEXT,
+ promoted INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS model_state(
+ model_name TEXT PRIMARY KEY,
+ weights_json TEXT NOT NULL,
+ updated_at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS user_feedback(
+ id INTEGER PRIMARY KEY AUTOINCREMENT,
+ source TEXT NOT NULL,
+ market_id TEXT NOT NULL,
+ rating TEXT NOT NULL CHECK(rating IN ('helpful','not-helpful')),
+ recorded_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS feedback_market ON user_feedback(source,market_id);
 CREATE TABLE IF NOT EXISTS agent_runs(
  run_id INTEGER PRIMARY KEY AUTOINCREMENT,
  started_at INTEGER NOT NULL,
