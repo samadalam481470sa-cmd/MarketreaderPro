@@ -53,3 +53,18 @@ Set `MRP_PUBLIC_HISTORY=true` **only if all imported data may lawfully be redist
 `db/migrations/008_history_quality.sql` creates the relevant tables. Existing imports are preserved until deliberately deleted by a database administrator. Back up PostgreSQL and do not expose its port publicly.
 
 The import is bounded to 160 KB CSVs and at most 6,000 daily rows per batch. No automatic external provider crawling is added.
+
+
+## Verify a stored archive and compare revisions
+
+After importing, run `npm run history:verify` to audit the most recent 50 datasets, or `npm run history:verify -- --id SHA256` to verify one. The audit recomputes the normalized import checksum from SQL prices and provenance; it also checks symbol order, completeness, dates and alignment. Failed verifications set a nonzero exit code.
+
+To compare a corrected import with an older revision:
+
+```bash
+npm run history:diff -- ORIGINAL_SHA256 REVISED_SHA256
+```
+
+The comparison reports overlapping dates/symbols, a bounded sample of changed prices, fractional price changes, and altered coverage. It rejects corrupted/incomplete datasets rather than treating them as authoritative.
+
+**A successful SHA-256 integrity audit checks the integrity of this application's stored records relative to the original import**. It cannot prove the original files were accurate, that a publisher is authoritative, or that redistribution is licensed. Dataset writes remain operator-only and public access remains disabled unless explicitly enabled.

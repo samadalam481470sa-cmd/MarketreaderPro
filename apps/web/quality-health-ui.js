@@ -34,5 +34,28 @@ async function refreshHealth(){
   }
  }catch(e){sourcePanel.replaceChildren(make('p','Source health unavailable: '+e.message))}
 }
+async function refreshIncidents(){
+ const root=document.querySelector('#quality-incident-results');
+ if(!root)return;
+ root.replaceChildren(make('p','Checking active source incidents…'));
+ try{
+  const response=await fetch('/api/source-incidents',{headers:{Accept:'application/json'}});
+  const report=await response.json();
+  if(!response.ok)throw Error(report.error||'Incident API unavailable');
+  root.replaceChildren();
+  if(!report.alerts?.length)root.append(make('p','No active incidents recorded.'));
+  for(const incident of report.alerts||[]){
+   const row=make('div');row.className='health-row';
+   const left=make('div');
+   left.append(make('strong',incident.source_name),
+    make('small','Observed '+incident.observations+' times · '+
+     (incident.reasons||[]).join(', ')));
+   const state=make('strong',incident.state);
+   state.className='health-'+incident.state;
+   row.append(left,state);root.append(row);
+  }
+ }catch(e){root.replaceChildren(make('p','Incident status unavailable: '+e.message))}
+}
 refreshHealth();
-document.querySelector('#dashboard-refresh')?.addEventListener('click',refreshHealth);
+refreshIncidents();
+document.querySelector('#dashboard-refresh')?.addEventListener('click',()=>{refreshHealth();refreshIncidents()});

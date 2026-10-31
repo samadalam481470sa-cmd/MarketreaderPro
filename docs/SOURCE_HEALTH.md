@@ -19,3 +19,17 @@ Operational freshness **does not confirm that vendor prices, economic news, or g
 The app's **Source Coverage** dashboard now shows the database-backed health status and counts. The operator can inspect the API without connecting a personal bank or brokerage account.
 
 The health history is measured each time the intelligence job runs. It does not install a recurring job by itself. See [intelligence scheduling](INTELLIGENCE.md).
+
+
+## Durable source incidents (v1.8)
+
+The collector also writes to `source_health_alerts` through `apps/api/quality-alerts.js`. An unresolved incident is unique per source:
+
+- A degraded, critical, stale or unknown source has one active incident. Repeated unhealthy checks update its state, last-seen time, reason codes and observation counter.
+- A subsequent **fresh healthy** collection resolves its incident and preserves the historical record.
+- A source disappearing from collection is never silently considered recovered.
+- A later outage after recovery creates a new incident rather than erasing the original event.
+
+`GET /api/source-incidents` shows up to 30 active incidents by default. `?resolved=true&limit=100` includes prior resolved incidents. These routes describe the app's feed operations—not completeness, truthfulness or tradeability of source content.
+
+The schema uses a partial unique index preventing duplicate unresolved incidents and supports database integration tests for outage → recovery → second outage.

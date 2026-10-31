@@ -47,3 +47,14 @@ Each fold includes train/test dates and per-method weights, transaction drag and
 Out-of-sample performance does not guarantee future returns. Data can exhibit survivorship and lookahead bias from asset universe selection, corporate actions, or vendor revisions. Simulated next-close transactions are not authenticated executable quotes. The tool cannot submit orders and is not financial advice.
 
 The interface reuses the multi-asset historical CSV parser in Portfolio Risk Lab. Upload a lawful historical close CSV and select **Walk-forward Lab**.
+
+
+## Pre-declared final-fold selection and transaction-cost sensitivity (v1.8)
+
+For two or more walk-forward folds, the engine selects a single predefined algorithm using **earlier held-out fold results only**. The selection criterion is mean excess historical return relative to fee-aware passive buy-and-hold, with a drawdown tie-breaker. It then reports the chosen method's performance on the **last untouched fold**. When only one fold exists, the holdout status is `insufficient-folds`, not a fake independent score.
+
+This protocol prevents a method's final-fold outcome from entering the programmatic selection decision; however, changing the method universe or thresholds after inspecting the result would still contaminate the evaluation. It does not replace a genuinely future independent study.
+
+The optional `walkForward.includeCostStress=true` replays the same held-out periods and fixed training-only weights at zero, configured, and higher hypothetical transaction costs. Training allocations are not recalculated using test data. These costs are assumptions, not actual execution fills.
+
+The report also includes descriptive per-method fold stability: worst excess result, excess-return dispersion and consecutive underperformance streaks. With a few folds these are **small-sample diagnostics**, not reliable confidence intervals.

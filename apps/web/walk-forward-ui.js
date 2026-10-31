@@ -32,6 +32,25 @@ export function renderWalkForward(output,report){
   metric('Test observations / fold',report.configuration.testingBars)
  );
  output.append(stats,resultTable(report),element('h4','Chronological held-out windows'));
+ const holdout=report.holdout;
+ if(holdout?.status==='evaluated'){
+  const holdoutResult=element('article');
+  holdoutResult.append(element('h4','Independent final-fold selection'),
+   element('p','Selected on earlier folds: '+holdout.selectedMethod),
+   element('p','Untouched final fold: '+holdout.holdoutStart.slice(0,10)+
+    ' to '+holdout.holdoutEnd.slice(0,10)),
+   element('p','Final-fold historical return: '+percent(holdout.finalHoldout.totalReturn)+
+    ' · Excess vs passive: '+percent(holdout.finalHoldout.excessReturn)));
+  output.append(holdoutResult);
+ }else output.append(element('p','Independent final holdout unavailable: at least 2 folds are required.'));
+ if(report.costSensitivity){
+  const article=element('article');article.append(element('h4','Simulated transaction-cost sensitivity'));
+  for(const scenario of report.costSensitivity.scenarios){
+   article.append(element('p',scenario.label+': '+report.methods.map(m=>
+    m+' '+percent(scenario.methods[m].averageOutOfSampleReturn)).join(' · ')));
+  }
+  output.append(article);
+ }
  for(const fold of report.folds){
   const title=element('h4','Fold '+fold.fold+': '+fold.trainStart.slice(0,10)+' to '+fold.trainEnd.slice(0,10));
   const note=element('p','Test begins '+fold.firstTestObservation.slice(0,10)+
@@ -70,6 +89,7 @@ query('#walk-forward-form').addEventListener('submit',async event=>{
   const walkForward={};
   for(const key of ['trainingBars','testingBars','stepBars','purgeGapBars'])
    walkForward[key]=Number(form.get(key));
+  walkForward.includeCostStress=form.get('includeCostStress')==='on';
   const execution={feeBps:Number(form.get('feeBps')),slippageBps:Number(form.get('slippageBps'))};
   const response=await fetch('/api/walk-forward',{
    method:'POST',headers:{'Content-Type':'application/json'},

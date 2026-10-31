@@ -45,6 +45,16 @@ Open **http://localhost:3000**. The startup scripts migrate PostgreSQL, attempt 
 
 A lighter read-only run is possible with `npm install && npm start`, but historical/briefing features require a configured database. This is a downloadable application source package, **not a signed native desktop installer**.
 
+## Historical archive audits, independent holdouts and source incidents (v1.8)
+
+**Historical archive integrity:** The CLI recomputes SHA-256 checksums from persisted PostgreSQL values, reports missing rows or modified prices and compares two independently imported archives by date and symbol. The operator-only commands are `npm run history:verify` and `npm run history:diff -- ORIGINAL_SHA256 REVISED_SHA256`. [Historical archive checks](docs/HISTORY_IMPORT.md).
+
+**Independent holdout selection:** Walk-forward research now distinguishes folds used to select a predefined allocation model from the final untouched fold. The dashboard identifies the selected model and final-fold outcome, and can optionally repeat the exact test observations under higher assumed fees/slippage. This limits some lookahead errors but cannot guarantee future performance or eliminate adaptive selection bias. [Methodology](docs/WALK_FORWARD.md).
+
+**Persistent source incidents:** Collection failures, degraded reporting and stale updates now create durable PostgreSQL incident records. A source must make a fresh successful recovery before an incident resolves. `GET /api/source-incidents` displays active alerts; `?resolved=true` also shows past incidents. [Operational source health](docs/SOURCE_HEALTH.md).
+
+**Expanded integration coverage:** SQL tests detect price tampering, compare revisions, check deduplication and verify incident creation/recovery. GitHub's first-party line audit now explicitly counts database integration tests.
+
 ## Historical import, walk-forward and data quality (v1.7)
 
 - **Operator-only historical archive:** validated, permission-annotated OHLC close CSV imports into immutable PostgreSQL datasets; deduplication by SHA-256. Run `npm run history:import -- --file ./prices.csv --source "Authorized provider" --license "Permitted internal research"`. Run `npm run history:catalog` to inspect stored sources. Historical data API export is off by default and requires `MRP_PUBLIC_HISTORY=true`.

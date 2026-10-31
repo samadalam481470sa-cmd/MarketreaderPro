@@ -1,6 +1,6 @@
 import {readdir,readFile,mkdir,writeFile} from 'node:fs/promises';
 import {join,relative,extname,dirname} from 'node:path';
-const groups={backend:'apps/api',dashboard:'apps/web',gpu:'agent',database:'db',tools:'scripts',tests:'tests',pythonTests:'tests_py'};
+const groups={backend:'apps/api',dashboard:'apps/web',gpu:'agent',database:'db',tools:'scripts',tests:'tests',pythonTests:'tests_py',databaseTests:'tests_db'};
 const extensions=new Set(['.js','.py','.sql','.css','.html','.sh','.ps1','.ts']);
 const ignored=new Set(['node_modules','.git','vendor','dist','build','__pycache__','.venv']);
 export async function audit(root=process.cwd()){
