@@ -13,6 +13,7 @@ import {createLinkToken,exchangeBankToken,listBankAccounts,unlinkBank} from './b
 import {latestIntelligence} from './intelligence.js';
 import {COVERAGE_TARGETS} from './coverage.js';
 import {getForm4Transactions} from './sec-transactions.js';
+import {technicalAnalysis} from './indicators.js';
 import {timestampQuality} from './data-quality.js';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../web');
 const staticFiles=new Map([['/','index.html'],['/index.html','index.html'],['/app.js','app.js'],['/style.css','style.css'],['/dashboard-preview.svg','dashboard-preview.svg'],['/intelligence-dashboard.svg','intelligence-dashboard.svg'],['/government-dashboard.svg','government-dashboard.svg']]);
@@ -42,6 +43,17 @@ if(path.startsWith('/api/')){
     const u=new URL(req.url,'http://localhost');
     const limit=Number(u.searchParams.get('limit')||50),ticker=u.searchParams.get('ticker');
     try{return json(res,200,await getForm4Transactions(await getPool(),{limit,ticker}))}catch(e){return json(res,e.message.startsWith('Invalid')||e.message.startsWith('Limit')?422:503,{error:'SEC transaction query unavailable'})}
+  }
+  if(path==='/api/indicators'&&req.method==='GET'){
+    if(!configured())return json(res,503,{error:'Historical PostgreSQL observations required'});
+    const u=new URL(req.url,'http://localhost');
+    const source=u.searchParams.get('source'),externalId=u.searchParams.get('id');
+    const period=Number(u.searchParams.get('period')||14);
+    try{
+      const history=await readHistory(await getPool(),{source,externalId,limit:500});
+      const values=history.history.map(x=>x.probability===null?null:Number(x.probability)).reverse().filter(x=>x!==null&&Number.isFinite(x));
+      return json(res,200,{source,id:externalId,...technicalAnalysis({values,period})});
+    }catch(e){return json(res,e.status===422||/Invalid|Limit/.test(e.message)?422:503,{error:e.status===422||/Invalid|Limit/.test(e.message)?e.message:'Indicator service unavailable'})}
   }
   if(path==='/api/coverage'&&req.method==='GET'){
     if(!configured())return json(res,200,{configured:false,targets:COVERAGE_TARGETS,sources:[]});
