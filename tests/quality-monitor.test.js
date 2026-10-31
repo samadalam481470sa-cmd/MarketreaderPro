@@ -2,48 +2,46 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {classifySource,summarizeHealth,recordSourceChecks} from '../apps/api/quality-monitor.js';
 const now=Date.parse('2026-10-31T12:00:00Z');
-const iso=h=>new Date(now-h*3600000).toISOString();
-const record=(state='ok',h=1)=>({
- source_name:'market-kalshi',last_status:state,last_attempt_at:iso(h),
- last_success_at:state==='ok'?iso(h):iso(1),item_count:5,
- history:[{status:state,checked_at:iso(h)}]
+const at=h=>new Date(now-h*3600000).toISOString();
+const entry=(status='ok',age=1)=>({
+ source_name:'official-bls',last_status:status,last_attempt_at:at(age),
+ last_success_at:status==='ok'?at(age):at(2),item_count:5,
+ history:[{status,checked_at:at(age)}]
 });
-test('healthy status needs fresh observations and a successful last attempt',()=>{
- const health=classifySource(record(),{now});
- assert.equal(health.state,'healthy');
- assert.equal(health.recentWeightedSuccessRate,1);
+test('fresh successful feed is healthy',()=>{
+ const report=classifySource(entry(),{now});
+ assert.equal(report.state,'healthy');
+ assert.equal(report.recentWeightedSuccessRate,1);
 });
-test('a once-successful source is flagged stale after long silence',()=>{
- const health=classifySource(record('ok',72),{now});
- assert.equal(health.state,'stale');
- assert.ok(health.reasons.includes('stale_last_attempt'));
+test('last success is not evidence of current freshness',()=>{
+ const report=classifySource(entry('ok',96),{now});
+ assert.equal(report.state,'stale');
+ assert.ok(report.reasons.includes('stale_last_attempt'));
 });
-test('unavailable upstream and repeated failures are not hidden',()=>{
- const x=record('unavailable');
- x.history=Array.from({length:10},()=>({status:'unavailable'}));
- const h=classifySource(x,{now});
- assert.equal(h.state,'critical');
- assert.equal(h.consecutiveNonSuccesses,10);
- assert.ok(h.reasons.includes('elevated_failure_rate'));
+test('repeated outages are critical, not silently counted as success',()=>{
+ const data=entry('unavailable',1);
+ data.history=Array.from({length:10},()=>({status:'unavailable'}));
+ const report=classifySource(data,{now});
+ assert.equal(report.state,'critical');
+ assert.equal(report.consecutiveNonSuccesses,10);
 });
-test('a partial feed degrades overall source health',()=>{
- const a=record('partial');
- const summary=summarizeHealth([a],{now});
- assert.equal(summary.overall,'degraded');
- assert.equal(summary.counts.degraded,1);
+test('partial source means degraded overall reliability',()=>{
+ const result=summarizeHealth([entry('partial')],{now});
+ assert.equal(result.overall,'degraded');
+ assert.equal(result.counts.degraded,1);
 });
-test('no registered source is not reported as healthy',()=>{
+test('zero recorded attempts are explicitly unconfigured',()=>{
  assert.equal(summarizeHealth([],{now}).overall,'unconfigured');
 });
-test('records only known status values with bounded counts and parameterized SQL',async()=>{
+test('quality events are parameterized and sanitize missing status',async()=>{
  const calls=[];
  const db={query:async(sql,values)=>{calls.push({sql,values});return {rowCount:1}}};
- const output=await recordSourceChecks(db,[
+ const status=await recordSourceChecks(db,[
   {name:'market-kalshi',status:'ok',items:10},
-  {name:'gdelt-foo',status:'partial',items:3},
-  {name:'bad-source',status:'not-a-real-status',items:-1}
+  {name:'market-polymarket',status:'partial',items:3},
+  {name:'source-error',status:'unknown',items:-1}
  ],{now:new Date(now)});
- assert.equal(output.length,3);
+ assert.equal(status.length,3);
  assert.deepEqual(calls.map(x=>x.values[2]),['ok','partial','unavailable']);
  assert.equal(calls[2].values[3],0);
  assert.ok(calls.every(x=>x.sql.includes('$1')&&x.sql.includes('$5')));
