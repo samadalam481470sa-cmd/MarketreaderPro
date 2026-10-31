@@ -45,6 +45,10 @@ Open **http://localhost:3000**. The startup scripts migrate PostgreSQL, attempt 
 
 A lighter read-only run is possible with `npm install && npm start`, but historical/briefing features require a configured database. This is a downloadable application source package, **not a signed native desktop installer**.
 
+## Historical research lab
+
+The source-backed research lab adds rolling probability analytics, anomaly detection, max drawdown measures, and leak-resistant walk-forward baseline comparisons. Read [the methodology](docs/RESEARCH_LAB.md) or call `GET /api/research-lab?source=kalshi&id=MARKET_ID&window=10&evaluation=true` after storing observations. These statistics are descriptive, not trading recommendations.
+
 ## Capabilities
 
 | Component | Current function |
