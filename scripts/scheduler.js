@@ -20,7 +20,7 @@ const run=async()=>{
  const existing=await db.query('SELECT briefing_date FROM daily_briefings WHERE briefing_date=$1',[today]);
  if(existing.rowCount)return {skipped:'already-generated'};
  const secCiks=(process.env.MRP_SEC_CIKS||'').split(',').map(x=>x.trim()).filter(Boolean);
- if(secCiks.length>10||secCiks.some(x=>!/^\d{1,10}$/.test(x)))throw Error('Invalid SEC CIK configuration');
+ if(secCiks.length>50||secCiks.some(x=>!/^\d{1,10}$/.test(x)))throw Error('Invalid SEC CIK configuration');
  // Exclusive transaction lock is session scoped and released on disconnect.
  const client=await db.connect();
  let locked=false;

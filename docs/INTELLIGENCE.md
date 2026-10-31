@@ -56,3 +56,12 @@ The worker targets 7:00 AM in America/Chicago including daylight saving, attempt
 In the server's secrets manager set `AI_BRIEFING_ENABLED=true`, `AI_API_KEY` and `AI_MODEL`. Re-run `npm run intelligence:once` or wait for a scheduled next-day briefing. The worker sends at most fifteen **public** source titles, timestamps and URLs to the configured AI provider. The AI commentary is labeled and is never treated as a verified price, a trade recommendation, or a replacement for the original linked sources. If the provider fails, the factual digest still saves successfully. AI costs and provider terms apply.
 
 The Docker worker must be provisioned with these environment variables separately; merely setting variables on the host shell does not automatically expose them inside the worker container.
+
+## Expanded coverage (v1.0)
+
+- GDELT article discovery across four bounded public-news topics (markets, crypto, commodities and government-financial policy). The app records the original publisher URL and title, not article content. GDELT does not include every news organization and rate limits/unavailability are possible.
+- Paginated Kalshi and Polymarket public market discovery (default three pages × up to 100 markets per source). Results are a rolling snapshot, not a guaranteed full-exchange mirror.
+- Up to 50 operator-supplied SEC CIK identifiers (metadata only). Requests are paced. Tracking every individual filer globally is not implemented.
+- `GET /api/coverage` shows connector outcomes and last successful collection. Source failures remain visible.
+
+Official House and Senate portals remain links; automated transaction-by-transaction Congress ingestion and complete global financial-market quotes require separately verified feeds, commercial permissions where applicable, and additional code. Senate disclosure data has restrictions on some commercial uses.

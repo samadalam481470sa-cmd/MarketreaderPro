@@ -30,6 +30,10 @@ See [GPU agent installation, power behavior and privacy controls](docs/LOCAL_GPU
 
 [Windows/macOS/Linux quick start](docs/QUICKSTART.md) — requires Docker. The scripts start PostgreSQL, the web app, the first intelligence refresh and an opt-in morning scheduler. This is source code, **not a signed desktop installer**.
 
+## Expanded news and market discovery (v1.0)
+
+The intelligence worker now discovers cross-publisher financial headlines through GDELT, paginates public prediction markets, accepts up to 50 configured SEC CIKs, and reports actual source coverage at `GET /api/coverage`. This is broad discovery but **not every market, news publisher, or politician**, and it does not misrepresent government filing metadata as real-time trades. See [coverage documentation](docs/INTELLIGENCE.md).
+
 ## Morning intelligence feed (v0.9)
 
 A scheduled research job collects public Federal Reserve and BLS macro news, prediction-market snapshots and optional SEC Form 4 filing metadata for explicitly configured CIKs. PostgreSQL deduplicates the source-linked headlines and saves dated morning digests. The dashboard displays the latest briefing, but ingestion must run on a persistent scheduled server. No claim of coverage of every market, every journalist or every official.

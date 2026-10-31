@@ -3,6 +3,9 @@ import {loadMarkets} from './markets.js';
 import {fetchSecFilings} from './sec.js';
 import {saveMarkets} from './database.js';
 import {enrichBriefing} from './briefing-ai.js';
+import {discoverNews} from './broad-news.js';
+import {discoverMarketUniverse} from './market-universe.js';
+import {coverageSummary} from './coverage.js';
 
 export const PUBLIC_FEEDS=Object.freeze([
  {id:'federal-reserve',url:'https://www.federalreserve.gov/feeds/press_all.xml',hosts:['www.federalreserve.gov','federalreserve.gov']},
@@ -48,10 +51,10 @@ export function buildBriefing({day,items=[],markets=[],filings=[],errors={}}){
  const brief={
   date:day,title:'MarketreaderPro morning intelligence — '+day,
   generatedAt:new Date().toISOString(),mode:'source-backed automatic digest',
-  coverage:'Two official macro RSS sources, two public prediction market feeds, and explicitly configured SEC CIK filings. No exhaustive politician, global-news, or exchange coverage.',
+  coverage:'Official macro news, bounded GDELT cross-publisher discovery, paginated public prediction markets and configured SEC CIK filing metadata. Not every publisher, official or exchange.',
   warnings:Object.entries(errors).map(([source,error])=>source+': '+error),
   sections:[
-   {title:'Official macro news',entries:items.slice(0,15).map(x=>({title:x.title,source:x.source,url:x.url,publishedAt:x.published_at||x.publishedAt,summary:x.summary}))},
+   {title:'Official macro and financial news',entries:items.slice(0,40).map(x=>({title:x.title,source:x.source,url:x.url,publishedAt:x.published_at||x.publishedAt,summary:x.summary}))},
    {title:'Prediction markets',entries:markets.slice(0,12).map(x=>({title:x.title,source:x.source,url:x.url||null,observation:x.price||null}))},
    {title:'SEC Form 4 filing metadata',entries:filings.slice(0,12).map(x=>({title:x.form+' filing · CIK '+x.cik,source:'SEC EDGAR',url:x.sourceUrl,publishedAt:x.filedAt}))}
   ],
@@ -67,7 +70,7 @@ export async function latestIntelligence(db,limit=40){
  ]);
  return {items:a.rows,briefing:b.rows[0]?.body??null};
 }
-export async function ingestIntelligence(db,{fetcher=fetch,marketLoader=loadMarkets,secFetcher=fetchSecFilings,secCiks=[],now=new Date()}={}){
+export async function ingestIntelligence(db,{fetcher=fetch,marketLoader=discoverMarketUniverse,newsLoader=discoverNews,secFetcher=fetchSecFilings,secCiks=[],now=new Date()}={}){
  const run=await db.query("INSERT INTO intelligence_runs(status) VALUES('running') RETURNING id");
  const errors={};const allItems=[];const filings=[];let saved=0,marketCount=0;
  try{
@@ -76,29 +79,36 @@ export async function ingestIntelligence(db,{fetcher=fetch,marketLoader=loadMark
    if(feedResults[i].status==='fulfilled')allItems.push(...feedResults[i].value);
    else errors[PUBLIC_FEEDS[i].id]=feedResults[i].reason?.name||'Unavailable';
   }
+  const newsStatus={};
+  try{const discovered=await newsLoader({fetcher});allItems.push(...discovered.rows);Object.assign(errors,discovered.errors);Object.assign(newsStatus,discovered.status)}catch(e){errors.gdelt=e.name}
   saved=await insertItems(db,allItems);
   let markets=[];
   try{
-   const snapshot=await marketLoader();
+   const snapshot=await marketLoader({fetcher});
    for(const source of ['kalshi','polymarket']){
-    if(snapshot.availability[source]==='fulfilled'){
-     try{await saveMarkets(db,source,snapshot[source],new Date(snapshot.asOf));marketCount+=snapshot[source].length}
+    if((snapshot.availability?.[source]==='fulfilled'||snapshot.status?.[source]?.status==='ok'||snapshot.status?.[source]?.status==='partial')&&Array.isArray(snapshot.rows?.[source]||snapshot[source])){
+     const rowset=snapshot.rows?.[source]||snapshot[source];
+     try{for(let offset=0;offset<rowset.length;offset+=100)await saveMarkets(db,source,rowset.slice(offset,offset+100),new Date(snapshot.asOf||now));marketCount+=rowset.length}
      catch(e){errors['market-db-'+source]=e.name}
-     markets.push(...snapshot[source].slice(0,6).map(x=>({...x,source})));
+     markets.push(...rowset.slice(0,6).map(x=>({...x,source})));
     }else errors[source]='Feed unavailable';
    }
   }catch(e){errors.markets=e.name}
-  for(const cik of secCiks.slice(0,10)){
+  const secStatus={};
+  for(const cik of secCiks.slice(0,50)){
    try{
-    const r=await secFetcher(cik);filings.push(...r.slice(0,15));
-   }catch(e){errors['sec-'+cik]=e.name}
+    const r=await secFetcher(cik);filings.push(...r.slice(0,15));secStatus[cik]={status:'ok',items:r.length};
+   }catch(e){errors['sec-'+cik]=e.name;secStatus[cik]={status:'unavailable',items:0}}
+   if(secCiks.length>1)await new Promise(resolve=>setTimeout(resolve,125));
   }
+  const cover=coverageSummary({newsStatus,markets:{kalshi:{status:errors.kalshi?'unavailable':'ok',items:markets.filter(m=>m.source==='kalshi').length},polymarket:{status:errors.polymarket?'unavailable':'ok',items:markets.filter(m=>m.source==='polymarket').length}},sec:secStatus,errors});
+  for(const entry of cover.sources){await db.query(`INSERT INTO source_coverage(source_name,last_status,item_count,last_success_at) VALUES($1,$2,$3,CASE WHEN $2='ok' THEN now() ELSE NULL END) ON CONFLICT(source_name) DO UPDATE SET last_attempt_at=now(),last_status=EXCLUDED.last_status,item_count=EXCLUDED.item_count,last_success_at=CASE WHEN EXCLUDED.last_status='ok' THEN now() ELSE source_coverage.last_success_at END`,[entry.name,entry.status,entry.items||0])}
   const day=localDate(now);
-  const briefing=await enrichBriefing(buildBriefing({day,items:allItems,markets,filings,errors}));
+  const briefing=await enrichBriefing({...buildBriefing({day,items:allItems,markets,filings,errors}),coverageReport:cover});
   await db.query(`INSERT INTO daily_briefings(briefing_date,timezone,title,body)
    VALUES($1,'America/Chicago',$2,$3) ON CONFLICT(briefing_date) DO UPDATE SET title=EXCLUDED.title,body=EXCLUDED.body,generated_at=now()`,
    [day,briefing.title,JSON.stringify(briefing)]);
-  const result={day,newsItems:allItems.length,newItems:saved,markets:marketCount,filings:filings.length,errors};
+  const result={day,newsItems:allItems.length,newItems:saved,markets:marketCount,filings:filings.length,coverage:cover,errors};
   await db.query("UPDATE intelligence_runs SET completed_at=now(),status=$2,results=$3 WHERE id=$1",[run.rows[0].id,Object.keys(errors).length?'partial':'ok',JSON.stringify(result)]);
   return result;
  }catch(e){
