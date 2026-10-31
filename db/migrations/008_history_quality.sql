@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS historical_daily_closes (
   dataset_id TEXT NOT NULL REFERENCES historical_datasets(dataset_id) ON DELETE CASCADE,
   symbol TEXT NOT NULL CHECK (symbol ~ '^[A-Z0-9._-]{1,20}$'),
   observed_on DATE NOT NULL,
-  close_price DOUBLE PRECISION NOT NULL CHECK (close_price > 0 AND close_price <= 1000000000 AND isfinite(close_price)),
+  close_price DOUBLE PRECISION NOT NULL CHECK (close_price > 0 AND close_price <= 1000000000),
   PRIMARY KEY(dataset_id,symbol,observed_on)
 );
 CREATE INDEX IF NOT EXISTS historical_daily_closes_time_idx
