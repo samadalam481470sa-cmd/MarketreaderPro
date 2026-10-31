@@ -1,130 +1,149 @@
-# MarketreaderPro
+<div align="center">
 
-![MarketreaderPro illustrated dashboard](docs/images/dashboard-preview.svg)
+# ◈ MarketreaderPro
 
-> **Visual note:** illustration, not a screenshot of deployed software or real market returns.
+### Open-source financial research infrastructure
 
-![Architecture](docs/images/architecture.svg)
+**Market intelligence · Source provenance · Government filings · Prediction markets · Local GPU research**
 
-**Read-only financial market research platform for students and beginners.** Now with optional PostgreSQL market history storage and transactionally applied SQL migrations. Explore public prediction markets, official financial disclosure portals, concentration analytics and transparent educational research.
+[![CI](https://github.com/samadalam481470sa-cmd/MarketreaderPro/actions/workflows/ci.yml/badge.svg)](https://github.com/samadalam481470sa-cmd/MarketreaderPro/actions/workflows/ci.yml)
+![Node 22+](https://img.shields.io/badge/Node.js-22%2B-339933)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169E1)
+![Python](https://img.shields.io/badge/Python-GPU%20agent-3776AB)
+![Release](https://img.shields.io/badge/status-research%20beta-14b8a6)
 
-**Release status:** deployment-hardened *research prototype*. Not a regulated bank, brokerage, AI investment adviser, or production trading system. No bank login, deposits, personalized trading advice or real-money order placement.
+[Download ZIP](https://github.com/samadalam481470sa-cmd/MarketreaderPro/archive/refs/heads/main.zip) · [Quick start](docs/QUICKSTART.md) · [Architecture](docs/DEPLOYMENT.md) · [Intelligence docs](docs/INTELLIGENCE.md)
 
-## Local GPU learning research agent (v0.7)
+</div>
 
-A separate opt-in Python agent fetches public market snapshots, saves history to local SQLite, calculates descriptive momentum/volatility signals, and can train an experimental CUDA/MPS model on future observed price changes. It stores explicit local user feedback and generates review-only engineering proposals. It uses optional CUDA/Apple Metal through PyTorch, with CPU fallback. It runs while the OS is awake (including display off if allowed), **not in actual system sleep**.
+![Illustrated MarketreaderPro morning intelligence interface](docs/images/intelligence-dashboard.svg)
 
-```bash
-python3 -m unittest discover -s tests_py -v
-MRP_GPU=cpu python3 -m agent once
-MRP_GPU=auto python3 -m agent run
-python3 -m agent status
-python3 -m agent train
-python3 -m agent run --learn
-python3 -m agent propose
+> **Design illustration, not a screenshot of a deployed instance or live market quotes.** The UI has no real-money execution. Real source data appears only after providers are reachable and ingestion is configured.
+
+## At a glance
+
+MarketreaderPro is a modular **read-only market intelligence and educational research application**. It brings together source-linked financial news, public prediction-market snapshots, historical observations, SEC ownership filings, and transparent data-quality indicators. Its separate opt-in Python companion can perform local numerical research using CUDA or Apple Metal where available.
+
+**Release scope:** research beta with automated tests and container build checks, **not** a regulated bank, brokerage, investment adviser, or audited production financial platform.
+
+<table>
+<tr><td>📈 <b>Market discovery</b><br/>Bounded paginated Kalshi and Polymarket public API scans.</td><td>📰 <b>News intelligence</b><br/>Federal Reserve, BLS, and four GDELT topic searches.</td></tr>
+<tr><td>🏛️ <b>Official filings</b><br/>SEC Form 4 metadata and transaction XML for configured CIKs; opt-in House filing index.</td><td>🛡️ <b>Data quality</b><br/>Timestamp/freshness labels, quote validation, source links, and coverage gaps.</td></tr>
+<tr><td>🧠 <b>Research tools</b><br/>Educational rules; optional paid model-generated morning commentary.</td><td>⚡ <b>Local GPU companion</b><br/>Opt-in Python snapshots, experimental supervised training, reviewable change proposals.</td></tr>
+</table>
+
+## Interface gallery
+
+**Morning intelligence — source-linked research and feed health**
+
+![MarketreaderPro illustrated news and prediction-market dashboard](docs/images/intelligence-dashboard.svg)
+
+**Government filings, research coverage, and local agent**
+
+![MarketreaderPro illustrated disclosure and data-quality panels](docs/images/government-dashboard.svg)
+
+*Both previews are stylized mockups with illustrative entries. They deliberately omit fabricated current stock prices or claims of deployment.*
+
+## Run on your machine
+
+Download the [ZIP](https://github.com/samadalam481470sa-cmd/MarketreaderPro/archive/refs/heads/main.zip) or clone the repository. You need **Docker Desktop with Docker Compose**. The scripts provision a local PostgreSQL instance, migrate schema, perform an initial intelligence collection, and start the morning worker.
+
+**Windows PowerShell**
+
+```powershell
+git clone https://github.com/samadalam481470sa-cmd/MarketreaderPro.git
+cd MarketreaderPro
+$env:POSTGRES_PASSWORD="REPLACE_WITH_A_LONG_UNIQUE_SECRET"
+.\scripts\start-windows.ps1
 ```
 
-See [GPU agent installation, power behavior and privacy controls](docs/LOCAL_GPU_AGENT.md). Research is non-trading and opt-in.
-
-## Download and start now
-
-[Windows/macOS/Linux quick start](docs/QUICKSTART.md) — requires Docker. The scripts start PostgreSQL, the web app, the first intelligence refresh and an opt-in morning scheduler. This is source code, **not a signed desktop installer**.
-
-## Data-quality safeguards (v1.1.1)
-
-Source-aware timestamp checks, invalid quote rejection, source-linked briefings, and visible stale-data/partial-coverage warnings. Downloaded data is not presumed complete or real-time. These checks reduce mistakes but do not independently verify the truth of every external headline or disclosure.
-
-## Government disclosure processing (v1.1)
-
-- SEC Form 4 XML **transaction-level** extraction with dates, codes, share amounts, prices and attribution for configured CIKs.
-- Opt-in **offline House annual index** import (filing metadata; no automatic PDF transaction parsing) subject to statutory use restrictions.
-- New indexed disclosure APIs. Senate remains official-portal-only because access/usage rights are not cleared.
-- [Government disclosure documentation](docs/GOVERNMENT_DISCLOSURES.md).
-
-## Expanded news and market discovery (v1.0)
-
-The intelligence worker now discovers cross-publisher financial headlines through GDELT, paginates public prediction markets, accepts up to 50 configured SEC CIKs, and reports actual source coverage at `GET /api/coverage`. This is broad discovery but **not every market, news publisher, or politician**, and it does not misrepresent government filing metadata as real-time trades. See [coverage documentation](docs/INTELLIGENCE.md).
-
-## Morning intelligence feed (v0.9)
-
-A scheduled research job collects public Federal Reserve and BLS macro news, prediction-market snapshots and optional SEC Form 4 filing metadata for explicitly configured CIKs. PostgreSQL deduplicates the source-linked headlines and saves dated morning digests. The dashboard displays the latest briefing, but ingestion must run on a persistent scheduled server. No claim of coverage of every market, every journalist or every official.
+**macOS / Linux**
 
 ```bash
-npm run db:migrate
-npm run intelligence:once
-npm start
+git clone https://github.com/samadalam481470sa-cmd/MarketreaderPro.git
+cd MarketreaderPro
+export POSTGRES_PASSWORD="REPLACE_WITH_A_LONG_UNIQUE_SECRET"
+sh scripts/start-unix.sh
 ```
 
-See [Morning Intelligence installation and schedule](docs/INTELLIGENCE.md).
+Open **http://localhost:3000**. Data sources may be temporarily unavailable; the app records partial collection rather than silently replacing it with invented data.
 
-## Public deployment safety
-
-Version 0.8 defaults to safe research-only mode. Experimental banking, user accounts, AI completion and paper orders are blocked unless `ENABLE_EXPERIMENTAL_FEATURES=true` is explicitly configured for a reviewed sandbox. The GPU agent is opt-in on the user's awake computer and is not part of the cloud backend.
-
-See [Production release checklist](docs/PRODUCTION_RELEASE.md) and run `npm run smoke` after launching.
-
-## Run locally
-
-Requires Node.js 22+. PostgreSQL is optional for the public dashboard and required for persistence.
+For a lighter evaluation without persistence:
 
 ```bash
 npm install
-npm start
-# http://localhost:3000
 npm run verify
+npm start
 ```
 
-Docker:
+The public page starts without PostgreSQL, but saved briefings and account-backed features require the database. This is a downloadable source project, **not a signed Windows or macOS installer**. See [full setup](docs/QUICKSTART.md).
+
+## Intelligence pipeline
+
+```text
+ Official RSS ──┐
+ GDELT discovery├──> Validate & deduplicate ──> PostgreSQL
+ Prediction APIs├──> Provenance, freshness    │
+ SEC filings ───┘                            ├──> Briefing API ──> Dashboard
+                                           └──> 7 AM Central worker
+ Optional configured AI ──> Labeled commentary on source titles
+ Optional local GPU agent ──> Separate SQLite research journal
+```
+
+Daily worker: [scheduler documentation](docs/INTELLIGENCE.md). For always-on briefs when your own computer is off, deploy the worker on a persistent remote server. A sleeping local computer cannot run GPU training.
+
+## Trust and limitations
+
+| Capability | Current implementation |
+|---|---|
+| Public macro news | Official Federal Reserve/BLS RSS endpoints; availability may vary |
+| Broader financial headlines | GDELT topic discovery, not every news publisher |
+| Prediction markets | Limited paginated Kalshi/Polymarket scan, not every contract |
+| SEC trades | Selected configured CIKs; Form 4 transactions may lag or be amended |
+| U.S. House | Operator-supplied annual filing index; **PDF trades not fully parsed** |
+| U.S. Senate | Official disclosure portal links; **no automatic Senate importer** |
+| Live brokerage/bank transfers | **Unavailable** |
+| AI morning summary | Optional; requires operator-provided API configuration |
+| GPU learning | Opt-in local process when computer is awake |
+| Accuracy | Data checks and source visibility, **not a factual guarantee** |
+
+Experimental account, paper trading, and bank-aggregation routes are **disabled in public mode**. Never enter banking credentials in this research prototype. The app does not submit live orders or move real funds.
+
+## Project map
+
+| Directory | Responsibility |
+|---|---|
+| `apps/api` | Read-only public API, provider connectors, validation |
+| `apps/web` | Dashboard and research interface |
+| `db/migrations` | PostgreSQL schema, indexes and migrations |
+| `scripts` | Ingestion, scheduler, local startup and smoke checks |
+| `agent` | Python local research and optional GPU training |
+| `tests`, `tests_py` | Node and Python unit/integration tests |
+| `docs` | Engineering, legal boundaries, deployment instructions |
+
+## Verification
 
 ```bash
-docker build -t marketreaderpro .
-docker run --rm -p 3000:3000 marketreaderpro
+npm run verify
+python3 -m unittest discover -s tests_py -v
+npm run db:migrate
+npm run smoke
 ```
 
-See **[Database installation and migrations](docs/DATABASE.md)** for persistence and Docker Compose instructions.
+GitHub Actions runs Node/Python tests, PostgreSQL schema checks, builds a Docker image and boots the container for smoke tests. **Passing CI does not establish banking-grade production readiness or successful connection to every external provider.**
 
-Read **[Deployment and security checklist](docs/DEPLOYMENT.md)** before exposing a service publicly.
-
-## Included
-
-- Responsive web dashboard with original SVG illustration, historical database explorer, student simulation accounts, and SEC filing lookup.
-- Public Kalshi/Polymarket best-effort connectors, individual upstream failure handling, request timeouts, response-field allowlists and a 30-second cache.
-- Official SEC / US House / US Senate disclosure source links (not scraping/analysis).
-- Explainable, rule-based *educational* research responses; no connected language model.
-- Portfolio concentration calculator with validation.
-- Same-origin CSP, browser security headers, request IDs, body size limits, basic per-process rate limiting and graceful shutdown.
-- Liveness/readiness API endpoints, integration/unit tests, GitHub CI and Docker health check.
-
-## Endpoints
-
-| Method | Route | Purpose |
-|---|---|---|
-| GET | `/api/health` | Process liveness |
-| GET | `/api/ready` | Local readiness |
-| GET | `/api/markets` | Public Kalshi/Polymarket feed summaries |
-| GET | `/api/disclosures` | Official disclosure portal directory |
-| POST | `/api/research` | Keyword-based educational market research |
-| POST | `/api/risk` | Hypothetical portfolio concentration |
-
-Sample request:
+## API examples
 
 ```bash
-curl -X POST http://localhost:3000/api/risk -H 'content-type: application/json' -d '{"positions":[{"symbol":"ETF-A","value":600},{"symbol":"ETF-B","value":400}]}'
+curl http://localhost:3000/api/health
+curl http://localhost:3000/api/capabilities
+curl http://localhost:3000/api/coverage
+curl http://localhost:3000/api/intelligence
+curl http://localhost:3000/api/government/sec-transactions?limit=20
 ```
 
-## Additional working modules (v0.5)
+See [financial data accuracy](docs/INTELLIGENCE.md), [official disclosures](docs/GOVERNMENT_DISCLOSURES.md), [local GPU agent](docs/LOCAL_GPU_AGENT.md), [database](docs/DATABASE.md), and [deployment release gate](docs/PRODUCTION_RELEASE.md).
 
-- Credential-gated Plaid backend Link-token issuance, token exchange, encrypted server-side token storage, read-only account fetching, and connection revocation. Plaid Link frontend interaction and provider approval still required; no banking credentials collected by the app.
-- PostgreSQL-backed user registration, password verification, revocable bearer sessions and multi-user simulated trading balances and positions.
-- Optional hosted model-generated educational research through server-configured `AI_API_KEY` and `AI_MODEL`, with transparent rule-based fallback.
-- Read-only SEC filing metadata lookup by CIK. Configure `SEC_USER_AGENT` with an organization and contact email.
-- See [integrations and limitations](docs/INTEGRATIONS.md). None of these are real broker trades or full SEC transaction extraction.
+---
 
-## Still needed for actual financial-product production readiness
-
-Secure authentication and identity, authorized bank/broker data integrations, actual government filing ingestion, retrieval-grounded AI, comprehensive observability, regulated trading partnerships, audited financial controls, data handling/privacy program, extensive security testing and real-world deployment verification. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
-
-**Risk disclaimer:** Public congressional disclosures are typically delayed and do not establish unlawful insider trading. Market data can be unavailable or outdated. Do not use nonpublic information. No deposits or orders are supported.
-
-## Database attribution
-Database schemas and queries are original code. Integrates the permissively licensed [PostgreSQL](https://github.com/postgres/postgres) engine and the MIT-licensed [node-postgres driver](https://github.com/brianc/node-postgres); does not copy other repositories' user data.
+<sub>Educational and engineering research software. Not investment advice. Source publication dates and ingestion timestamps are different. Government financial disclosures can be delayed and are not evidence of unlawful activity. Licensed-data rights, regional availability, security reviews, and independent verification remain the operator's responsibility.</sub>

@@ -15,7 +15,7 @@ import {COVERAGE_TARGETS} from './coverage.js';
 import {getForm4Transactions} from './sec-transactions.js';
 import {timestampQuality} from './data-quality.js';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../web');
-const staticFiles=new Map([['/','index.html'],['/index.html','index.html'],['/app.js','app.js'],['/style.css','style.css'],['/dashboard-preview.svg','dashboard-preview.svg']]);
+const staticFiles=new Map([['/','index.html'],['/index.html','index.html'],['/app.js','app.js'],['/style.css','style.css'],['/dashboard-preview.svg','dashboard-preview.svg'],['/intelligence-dashboard.svg','intelligence-dashboard.svg'],['/government-dashboard.svg','government-dashboard.svg']]);
 const types={html:'text/html; charset=utf-8',js:'text/javascript; charset=utf-8',css:'text/css; charset=utf-8',svg:'image/svg+xml'};
 const limiter=createLimiter({limit:90,windowMs:60000});
 const started=Date.now();
@@ -122,7 +122,7 @@ if(path.startsWith('/api/')){
 }
 if(req.method!=='GET'&&req.method!=='HEAD')return json(res,405,{error:'Method not allowed'},{'Allow':'GET, HEAD'});
 const filename=staticFiles.get(path);if(!filename)return json(res,404,{error:'Not found'});
-const asset=filename==='dashboard-preview.svg'?resolve(root,'../../docs/images/dashboard-preview.svg'):resolve(root,filename);
+const asset=filename.endsWith('.svg')?resolve(root,'../../docs/images/'+filename):resolve(root,filename);
 const type=types[filename.split('.').pop()];
 const bytes=await readFile(asset);
 res.writeHead(200,{...SECURITY_HEADERS,'Content-Type':type,'Cache-Control':filename==='index.html'?'no-cache':'public, max-age=300','Content-Length':bytes.length});res.end(req.method==='HEAD'?undefined:bytes);
