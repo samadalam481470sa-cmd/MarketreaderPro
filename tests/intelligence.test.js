@@ -14,7 +14,17 @@ test('briefing clearly labels incomplete coverage',()=>{
 test('day conversion respects configured timezone',()=>assert.match(localDate(new Date('2026-10-30T12:00:00Z')),/2026/));
 test('ingestion records partial failures and briefing',async()=>{
  const queries=[];
- const db={query:async(sql,params=[])=>{queries.push({sql,params});if(sql.startsWith('INSERT INTO intelligence_runs'))return {rows:[{id:7}]};return {rows:[],rowCount:1}}};
+ const db={query:async(sql,params=[])=>{
+  queries.push({sql,params});
+  if(sql.startsWith('INSERT INTO intelligence_runs'))return {rows:[{id:7}]};
+  return {rows:[],rowCount:1};
+ }};
+ db.connect=async()=>({query:db.query,release:()=>{}});
+
  const result=await ingestIntelligence(db,{fetcher:async()=>{throw Error('offline')},marketLoader:async()=>({availability:{kalshi:'rejected',polymarket:'rejected'},kalshi:[],polymarket:[],asOf:new Date().toISOString()})});
- assert.ok(result.errors.bls);assert.ok(result.errors.kalshi);assert.ok(queries.some(x=>x.sql.includes('INSERT INTO daily_briefings')));
+ assert.ok(result.errors.bls);assert.ok(result.errors.kalshi);
+ assert.ok(queries.some(x=>x.sql.includes('INSERT INTO daily_briefings')));
+ assert.ok(queries.some(x=>x.sql.includes('INSERT INTO source_health_events')));
+ assert.ok(queries.some(x=>x.sql.includes('BEGIN')));
+ assert.ok(queries.some(x=>x.sql.includes('COMMIT')));
 });
