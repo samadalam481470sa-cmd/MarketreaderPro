@@ -26,6 +26,18 @@ python3 -m agent propose
 
 See [GPU agent installation, power behavior and privacy controls](docs/LOCAL_GPU_AGENT.md). Research is non-trading and opt-in.
 
+## Morning intelligence feed (v0.9)
+
+A scheduled research job collects public Federal Reserve and BLS macro news, prediction-market snapshots and optional SEC Form 4 filing metadata for explicitly configured CIKs. PostgreSQL deduplicates the source-linked headlines and saves dated morning digests. The dashboard displays the latest briefing, but ingestion must run on a persistent scheduled server. No claim of coverage of every market, every journalist or every official.
+
+```bash
+npm run db:migrate
+npm run intelligence:once
+npm start
+```
+
+See [Morning Intelligence installation and schedule](docs/INTELLIGENCE.md).
+
 ## Public deployment safety
 
 Version 0.8 defaults to safe research-only mode. Experimental banking, user accounts, AI completion and paper orders are blocked unless `ENABLE_EXPERIMENTAL_FEATURES=true` is explicitly configured for a reviewed sandbox. The GPU agent is opt-in on the user's awake computer and is not part of the cloud backend.

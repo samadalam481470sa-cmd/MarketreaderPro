@@ -10,6 +10,7 @@ import {register,login,authenticate,logout,paperOrder,paperPortfolio} from './ac
 import {aiResearch} from './ai.js';
 import {fetchSecFilings} from './sec.js';
 import {createLinkToken,exchangeBankToken,listBankAccounts,unlinkBank} from './banking.js';
+import {latestIntelligence} from './intelligence.js';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../web');
 const staticFiles=new Map([['/','index.html'],['/index.html','index.html'],['/app.js','app.js'],['/style.css','style.css'],['/dashboard-preview.svg','dashboard-preview.svg']]);
 const types={html:'text/html; charset=utf-8',js:'text/javascript; charset=utf-8',css:'text/css; charset=utf-8',svg:'image/svg+xml'};
@@ -27,6 +28,11 @@ if(path.startsWith('/api/')){
   if(path==='/api/health'&&req.method==='GET')return json(res,200,{ok:true,mode:'research-only',uptimeSeconds:Math.floor((Date.now()-started)/1000),timestamp:new Date().toISOString()});
   if(path==='/api/ready'&&req.method==='GET')return json(res,200,{ready:true,dependencies:'no mandatory remote dependencies',mode:'research-only'});
   if(path==='/api/capabilities'&&req.method==='GET')return json(res,200,{mode:'public-research',experimental:experimentalEnabled(),liveTrading:false,liveBankTransfers:false,localGpuInBrowser:false});
+  if(path==='/api/intelligence'&&req.method==='GET'){
+    if(!configured())return json(res,503,{error:'Morning intelligence requires configured PostgreSQL and ingestion',items:[],briefing:null});
+    try{return json(res,200,await latestIntelligence(await getPool(),Number(new URL(req.url,'http://localhost').searchParams.get('limit')||40)))}
+    catch(e){return json(res,/^Limit/.test(e.message)?422:503,{error:/^Limit/.test(e.message)?e.message:'Intelligence data unavailable'})}
+  }
   if(path==='/api/db/status'&&req.method==='GET'){
     if(!configured())return json(res,503,{configured:false,error:'Database is not configured'});
     try{return json(res,200,{configured:true,...await stats(await getPool())})}catch{return json(res,503,{configured:true,error:'Database unavailable'})}

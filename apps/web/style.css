@@ -4,3 +4,5 @@
 .status-pill{border:1px solid #3a5c70;padding:8px 12px;border-radius:18px;color:#6de6c8;font-size:13px}select{width:100%;background:#0a1729;border:1px solid #3a506b;border-radius:8px;padding:13px;color:white;margin-top:8px;font:inherit}.observations{max-height:300px;overflow:auto}.observations p{padding:9px;border-bottom:1px solid #2e4057}
 
 #paper,#sec{scroll-margin-top:25px}#paper-balance{font-variant-numeric:tabular-nums}#auth-message,#paper-message{color:#7de5ca}#sec-result a{color:#7de5ca}#sec-result{max-height:420px;overflow:auto}
+
+#intelligence{scroll-margin-top:25px}#intelligence-briefing{display:grid;gap:14px}#intelligence-briefing a{color:#77e2ca;text-decoration:none}#intelligence-briefing p{margin:10px 0}#intelligence-briefing a:hover{text-decoration:underline}
