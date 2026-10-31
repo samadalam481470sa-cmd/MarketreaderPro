@@ -1,5 +1,12 @@
 # MarketreaderPro
 
+![Illustrative preview of the MarketreaderPro interface](docs/images/dashboard-preview.svg)
+
+> **Visual note:** This is a concept illustration based on the current dashboard layout, not a live brokerage account or screenshot of deployed software.
+
+![Current application architecture diagram](docs/images/architecture.svg)
+
+
 **Your market command center.** A runnable financial intelligence prototype for students combining public prediction market feeds, government disclosure portals and educational financial research.
 
 > **Status: functional research prototype, not a bank, brokerage or deployed AI adviser.** No account linking, identity verification, trading execution, regulated banking, or real model-powered advisory is implemented.
