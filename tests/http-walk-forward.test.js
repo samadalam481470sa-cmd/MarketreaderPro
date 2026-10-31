@@ -26,7 +26,7 @@ test('walk-forward HTTP returns only historical results',async()=>{
  assert.equal(b.methods.length,3);
 });
 test('impossible training windows return clear 422',async()=>{
- const v=input();v.walkForward.testingBars=100;
+ const v=input();v.walkForward.testingBars=100;v.walkForward.stepBars=100;
  const r=await post(v);
  assert.equal(r.status,422);
  assert.match((await r.json()).error,/Not enough|Testing bars/);
