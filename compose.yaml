@@ -47,6 +47,21 @@ services:
       postgres:
         condition: service_healthy
     networks: [internal]
+  intelligence-worker:
+    build: .
+    profiles: [intelligence]
+    command: ["node","scripts/scheduler.js"]
+    environment:
+      DATABASE_URL: postgres://marketreader:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@postgres:5432/marketreader
+      MRP_BRIEFING_HOUR: "7"
+      MRP_BRIEFING_MINUTE: "0"
+      SEC_USER_AGENT: ${SEC_USER_AGENT:-}
+      MRP_SEC_CIKS: ${MRP_SEC_CIKS:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks: [internal]
 networks:
   internal:
 volumes:

@@ -7,7 +7,7 @@
     "start": "node apps/api/server.js",
     "dev": "node --watch apps/api/server.js",
     "test": "node --test tests/*.test.js",
-    "check": "node --check apps/api/server.js && node --check apps/api/security.js && node --check apps/api/markets.js && node --check apps/api/database.js && node --check apps/web/app.js && node --check scripts/migrate.js && node --check scripts/ingest.js && node --check apps/api/accounts.js && node --check apps/api/ai.js && node --check apps/api/sec.js && node --check scripts/ingest-sec.js && node --check apps/api/banking.js && node --check apps/api/intelligence.js && node --check scripts/intelligence.js && node --check scripts/briefing-status.js",
+    "check": "node --check apps/api/server.js && node --check apps/api/security.js && node --check apps/api/markets.js && node --check apps/api/database.js && node --check apps/web/app.js && node --check scripts/migrate.js && node --check scripts/ingest.js && node --check apps/api/accounts.js && node --check apps/api/ai.js && node --check apps/api/sec.js && node --check scripts/ingest-sec.js && node --check apps/api/banking.js && node --check apps/api/intelligence.js && node --check scripts/intelligence.js && node --check scripts/briefing-status.js && node --check scripts/scheduler.js",
     "verify": "npm run check && npm test",
     "db:migrate": "node scripts/migrate.js",
     "db:ingest": "node scripts/ingest.js",
@@ -15,7 +15,8 @@
     "agent:test": "python3 -m unittest discover -s tests_py -v",
     "smoke": "node scripts/smoke.js",
     "intelligence:once": "node scripts/intelligence.js",
-    "intelligence:status": "node scripts/briefing-status.js"
+    "intelligence:status": "node scripts/briefing-status.js",
+    "intelligence:scheduled": "node scripts/scheduler.js"
   },
   "dependencies": {
     "pg": "^8.23.1"

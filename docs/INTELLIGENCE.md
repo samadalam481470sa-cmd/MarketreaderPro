@@ -40,3 +40,13 @@ The timezone of the scheduler must be verified. The script uses America/Chicago 
 - SEC Form 4 metadata does not prove suspicious transactions.
 - **No morning briefing exists before the first successful ingestion job.**
 - Credentials and banking services are not used by ingestion.
+
+## Automatic daily worker in Docker Compose
+
+After running the database migration, launch the background worker on an always-on host:
+
+```bash
+docker compose --profile intelligence up -d intelligence-worker
+```
+
+The worker targets 7:00 AM in America/Chicago including daylight saving, attempts one briefing per local calendar day, and uses a Postgres advisory lock to prevent duplicate concurrent runs. It can continue working while a user's computer is off **only if deployed on an always-on server**. No cloud host has been provisioned by this repository. A dashboard visit alone does not start the scheduler. Use `docker compose logs intelligence-worker` for diagnostic output.
