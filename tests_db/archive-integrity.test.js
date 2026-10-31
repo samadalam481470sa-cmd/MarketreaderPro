@@ -19,7 +19,7 @@ test.after(async()=>{
 });
 test('checksums survive SQL storage and preserve import provenance',async()=>{
  const report=await verifyStoredHistory(db,first.datasetId);
- assert.equal(report.status,'verified');
+ assert.equal(report.status,'verified',JSON.stringify({failures:report.failures,checksum:report.checksum,stored:report.storedChecksum,dataset:first.datasetId}));
  assert.equal(report.sourceAuthenticated,false);
  assert.equal(report.observations,40);
 });
