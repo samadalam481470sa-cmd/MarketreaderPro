@@ -74,20 +74,22 @@ export async function ingestIntelligence(db,{fetcher=fetch,marketLoader=discover
  const run=await db.query("INSERT INTO intelligence_runs(status) VALUES('running') RETURNING id");
  const errors={};const allItems=[];const filings=[];let saved=0,marketCount=0;
  try{
+  const officialStatus={};
   const feedResults=await Promise.allSettled(PUBLIC_FEEDS.map(f=>retrieveFeed(f,{fetcher})));
   for(let i=0;i<feedResults.length;i++){
-   if(feedResults[i].status==='fulfilled')allItems.push(...feedResults[i].value);
-   else errors[PUBLIC_FEEDS[i].id]=feedResults[i].reason?.name||'Unavailable';
+   if(feedResults[i].status==='fulfilled'){allItems.push(...feedResults[i].value);officialStatus[PUBLIC_FEEDS[i].id]={status:'ok',items:feedResults[i].value.length}}
+   else {errors[PUBLIC_FEEDS[i].id]=feedResults[i].reason?.name||'Unavailable';officialStatus[PUBLIC_FEEDS[i].id]={status:'unavailable',items:0}}
   }
   const newsStatus={};
   try{const discovered=await newsLoader({fetcher});allItems.push(...discovered.rows);Object.assign(errors,discovered.errors);Object.assign(newsStatus,discovered.status)}catch(e){errors.gdelt=e.name}
   saved=await insertItems(db,allItems);
-  let markets=[];
+  let markets=[];const marketTotals={kalshi:0,polymarket:0};
   try{
    const snapshot=await marketLoader({fetcher});
+   Object.assign(errors,snapshot.errors||{});
    for(const source of ['kalshi','polymarket']){
     if((snapshot.availability?.[source]==='fulfilled'||snapshot.status?.[source]?.status==='ok'||snapshot.status?.[source]?.status==='partial')&&Array.isArray(snapshot.rows?.[source]||snapshot[source])){
-     const rowset=snapshot.rows?.[source]||snapshot[source];
+     const rowset=snapshot.rows?.[source]||snapshot[source];marketTotals[source]=rowset.length;
      try{for(let offset=0;offset<rowset.length;offset+=100)await saveMarkets(db,source,rowset.slice(offset,offset+100),new Date(snapshot.asOf||now));marketCount+=rowset.length}
      catch(e){errors['market-db-'+source]=e.name}
      markets.push(...rowset.slice(0,6).map(x=>({...x,source})));
@@ -101,7 +103,7 @@ export async function ingestIntelligence(db,{fetcher=fetch,marketLoader=discover
    }catch(e){errors['sec-'+cik]=e.name;secStatus[cik]={status:'unavailable',items:0}}
    if(secCiks.length>1)await new Promise(resolve=>setTimeout(resolve,125));
   }
-  const cover=coverageSummary({newsStatus,markets:{kalshi:{status:errors.kalshi?'unavailable':'ok',items:markets.filter(m=>m.source==='kalshi').length},polymarket:{status:errors.polymarket?'unavailable':'ok',items:markets.filter(m=>m.source==='polymarket').length}},sec:secStatus,errors});
+  const cover=coverageSummary({newsStatus:{...officialStatus,...newsStatus},markets:{kalshi:{status:errors.kalshi?'partial':'ok',items:marketTotals.kalshi},polymarket:{status:errors.polymarket?'partial':'ok',items:marketTotals.polymarket}},sec:secStatus,errors});
   for(const entry of cover.sources){await db.query(`INSERT INTO source_coverage(source_name,last_status,item_count,last_success_at) VALUES($1,$2,$3,CASE WHEN $2='ok' THEN now() ELSE NULL END) ON CONFLICT(source_name) DO UPDATE SET last_attempt_at=now(),last_status=EXCLUDED.last_status,item_count=EXCLUDED.item_count,last_success_at=CASE WHEN EXCLUDED.last_status='ok' THEN now() ELSE source_coverage.last_success_at END`,[entry.name,entry.status,entry.items||0])}
   const day=localDate(now);
   const briefing=await enrichBriefing({...buildBriefing({day,items:allItems,markets,filings,errors}),coverageReport:cover});
