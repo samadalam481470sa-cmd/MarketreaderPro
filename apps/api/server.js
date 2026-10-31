@@ -16,10 +16,11 @@ import {getForm4Transactions} from './sec-transactions.js';
 import {technicalAnalysis} from './indicators.js';
 import {runBacktest} from './backtest/index.js';
 import {analyzePortfolio} from './portfolio-risk/index.js';
+import {runPortfolioRebalance} from './portfolio-rebalance/engine.js';
 import {buildHistoricalResearch} from './research-lab.js';
 import {timestampQuality} from './data-quality.js';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../web');
-const staticFiles=new Map([['/','index.html'],['/index.html','index.html'],['/app.js','app.js'],['/style.css','style.css'],['/dashboard-preview.svg','dashboard-preview.svg'],['/intelligence-dashboard.svg','intelligence-dashboard.svg'],['/government-dashboard.svg','government-dashboard.svg'],['/backtest-ui.js','backtest-ui.js'],['/csv.js','csv.js'],['/portfolio-csv.js','portfolio-csv.js'],['/portfolio-risk-ui.js','portfolio-risk-ui.js']]);
+const staticFiles=new Map([['/','index.html'],['/index.html','index.html'],['/app.js','app.js'],['/style.css','style.css'],['/dashboard-preview.svg','dashboard-preview.svg'],['/intelligence-dashboard.svg','intelligence-dashboard.svg'],['/government-dashboard.svg','government-dashboard.svg'],['/backtest-ui.js','backtest-ui.js'],['/csv.js','csv.js'],['/portfolio-csv.js','portfolio-csv.js'],['/portfolio-risk-ui.js','portfolio-risk-ui.js'],['/portfolio-rebalance-ui.js','portfolio-rebalance-ui.js']]);
 const types={html:'text/html; charset=utf-8',js:'text/javascript; charset=utf-8',css:'text/css; charset=utf-8',svg:'image/svg+xml'};
 const limiter=createLimiter({limit:90,windowMs:60000});
 const started=Date.now();
@@ -35,6 +36,12 @@ if(path.startsWith('/api/')){
   if(path==='/api/health'&&req.method==='GET')return json(res,200,{ok:true,mode:'research-only',uptimeSeconds:Math.floor((Date.now()-started)/1000),timestamp:new Date().toISOString()});
   if(path==='/api/ready'&&req.method==='GET')return json(res,200,{ready:true,dependencies:'no mandatory remote dependencies',mode:'research-only'});
   if(path==='/api/capabilities'&&req.method==='GET')return json(res,200,{mode:'public-research',experimental:experimentalEnabled(),liveTrading:false,liveBankTransfers:false,localGpuInBrowser:false});
+  if(path==='/api/portfolio-rebalance'){
+    if(req.method!=='POST')return json(res,405,{error:'Method not allowed'},{Allow:'POST'});
+    const data=await readJson(req,600000);
+    try{return json(res,200,runPortfolioRebalance(data))}
+    catch(e){return json(res,e.status===422?422:500,{error:e.status===422?e.message:'Allocation simulation failed',requestId:id})}
+  }
   if(path==='/api/portfolio-risk'){
     if(req.method!=='POST')return json(res,405,{error:'Method not allowed'},{Allow:'POST'});
     const data=await readJson(req,600000);
