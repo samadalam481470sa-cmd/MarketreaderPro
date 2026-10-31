@@ -38,7 +38,7 @@ export async function importDataset(db,dataset){
 export async function listDatasets(db,{limit=20}={}){
  if(!Number.isSafeInteger(limit)||limit<1||limit>50)
   throw Object.assign(Error('Limit must be 1–50'),{status:422});
- const r=await db.query(`SELECT dataset_id,source_label,source_url,license_note,
+ const r=await db.query(`SELECT dataset_id,checksum_sha256,source_label,source_url,license_note,
   imported_at,start_date,end_date,symbols,observation_count,asset_count,quality
   FROM historical_datasets ORDER BY imported_at DESC,dataset_id ASC LIMIT $1`,[limit]);
  return {datasets:r.rows,readOnly:true,
@@ -47,7 +47,7 @@ export async function listDatasets(db,{limit=20}={}){
 export async function readDataset(db,{datasetId}={}){
  if(typeof datasetId!=='string'||!/^[a-f0-9]{64}$/.test(datasetId))
   throw Object.assign(Error('Invalid dataset ID'),{status:422});
- const meta=await db.query(`SELECT dataset_id,source_label,source_url,license_note,
+ const meta=await db.query(`SELECT dataset_id,checksum_sha256,source_label,source_url,license_note,
   imported_at,start_date,end_date,symbols,observation_count,asset_count,quality
   FROM historical_datasets WHERE dataset_id=$1`,[datasetId]);
  if(!meta.rowCount)return null;
