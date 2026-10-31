@@ -24,7 +24,7 @@ export function parseForm4(xml,{cik,accession,url,filingDate=null}={}){
    issuerCik:cap(issuer?.issuerCik,10),issuerTicker:cap(issuer?.issuerTradingSymbol,24),
    reportingOwner:owner,securityTitle:cap(row?.securityTitle?.value,200),
    transactionDate:date,filingDate,transactionCode:code,
-   shares:numeric(amt.transactionShares?.value)||numeric(amt.transactionTotalValue?.value),
+   shares:numeric(amt.transactionShares?.value),
    pricePerShare:numeric(amt.transactionPricePerShare?.value),
    acquiredDisposed:cap(amt.transactionAcquiredDisposedCode?.value,1),
    directIndirect:cap(row?.ownershipNature?.directOrIndirectOwnership?.value,1),
