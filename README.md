@@ -1,56 +1,63 @@
 # MarketreaderPro
 
-![Illustrative preview of the MarketreaderPro interface](docs/images/dashboard-preview.svg)
+![MarketreaderPro illustrated dashboard](docs/images/dashboard-preview.svg)
 
-> **Visual note:** This is a concept illustration based on the current dashboard layout, not a live brokerage account or screenshot of deployed software.
+> **Visual note:** illustration, not a screenshot of deployed software or real market returns.
 
-![Current application architecture diagram](docs/images/architecture.svg)
+![Architecture](docs/images/architecture.svg)
 
+**Read-only financial market research platform for students and beginners.** Explore public prediction markets, official financial disclosure portals, concentration analytics and transparent educational research.
 
-**Your market command center.** A runnable financial intelligence prototype for students combining public prediction market feeds, government disclosure portals and educational financial research.
+**Release status:** deployment-hardened *research prototype*. Not a regulated bank, brokerage, AI investment adviser, or production trading system. No bank login, deposits, personalized trading advice or real-money order placement.
 
-> **Status: functional research prototype, not a bank, brokerage or deployed AI adviser.** No account linking, identity verification, trading execution, regulated banking, or real model-powered advisory is implemented.
+## Run locally
 
-## Start
-Requires Node.js 20 or newer.
+Requires Node.js 22+.
 
 ```bash
 npm start
-# Open http://localhost:3000
-npm test
+# http://localhost:3000
+npm run verify
 ```
 
-Docker: `docker build -t marketreaderpro . && docker run -p 3000:3000 marketreaderpro`.
+Docker:
 
-## Built functionality
-- Responsive finance dashboard with market and research panels.
-- Best-effort public Kalshi and Polymarket market retrieval with independent timeouts and explicit availability.
-- Links to SEC EDGAR, House and Senate financial disclosure portals (no automated ingestion yet).
-- Educational rule-based research responses (not a live LLM).
-- Weighted portfolio concentration and Herfindahl index calculator.
-- HTTP input validation, response security headers, tests and CI.
+```bash
+docker build -t marketreaderpro .
+docker run --rm -p 3000:3000 marketreaderpro
+```
 
-## APIs
-`GET /api/health` · `GET /api/markets` · `GET /api/disclosures` · `POST /api/research` · `POST /api/risk`
+Read **[Deployment and security checklist](docs/DEPLOYMENT.md)** before exposing a service publicly.
 
-Example:
+## Included
+
+- Responsive web dashboard with original SVG illustration.
+- Public Kalshi/Polymarket best-effort connectors, individual upstream failure handling, request timeouts, response-field allowlists and a 30-second cache.
+- Official SEC / US House / US Senate disclosure source links (not scraping/analysis).
+- Explainable, rule-based *educational* research responses; no connected language model.
+- Portfolio concentration calculator with validation.
+- Same-origin CSP, browser security headers, request IDs, body size limits, basic per-process rate limiting and graceful shutdown.
+- Liveness/readiness API endpoints, integration/unit tests, GitHub CI and Docker health check.
+
+## Endpoints
+
+| Method | Route | Purpose |
+|---|---|---|
+| GET | `/api/health` | Process liveness |
+| GET | `/api/ready` | Local readiness |
+| GET | `/api/markets` | Public Kalshi/Polymarket feed summaries |
+| GET | `/api/disclosures` | Official disclosure portal directory |
+| POST | `/api/research` | Keyword-based educational market research |
+| POST | `/api/risk` | Hypothetical portfolio concentration |
+
+Sample request:
+
 ```bash
 curl -X POST http://localhost:3000/api/risk -H 'content-type: application/json' -d '{"positions":[{"symbol":"ETF-A","value":600},{"symbol":"ETF-B","value":400}]}'
 ```
 
-## Architecture
-- `apps/web`: static dashboard and accessible interaction UI
-- `apps/api`: Node.js HTTP API, market adapters and financial math
-- `tests`: built-in test runner
-- `.github/workflows/ci.yml`: continuous testing
-- `Dockerfile`: reproducible packaging
+## Still needed for actual financial-product production readiness
 
-## Future work: not implemented
-1. Secure login, MFA, identity authorization, secret management and durable storage.
-2. Banking links through approved aggregation partners and brokerage account aggregation.
-3. Filing-level SEC and congressional ingestion with official provenance and delay timestamps.
-4. Retrieval-grounded LLM analysis with testing and safe advisory guardrails.
-5. Paper trading and then optional regulated, authorized execution integrations.
-6. Comprehensive integration/e2e/security tests, monitoring, rate limiting, audit infrastructure and production compliance.
+Secure authentication and identity, authorized bank/broker data integrations, filings ingestion, retrieval-grounded AI, comprehensive observability, regulated trading partnerships, audited financial controls, data handling/privacy program, extensive security testing and real-world deployment verification. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
-Congressional disclosures are not evidence of unlawful insider trading. Never use nonpublic material or mistake delayed filings for real-time signals. External market data can be stale or unavailable. No deposits or orders are supported.
+**Risk disclaimer:** Public congressional disclosures are typically delayed and do not establish unlawful insider trading. Market data can be unavailable or outdated. Do not use nonpublic information. No deposits or orders are supported.

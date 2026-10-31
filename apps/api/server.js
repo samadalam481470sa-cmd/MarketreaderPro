@@ -1,1 +1,51 @@
-import{createServer}from'node:http';import{readFile}from'node:fs/promises';import{fileURLToPath}from'node:url';import{dirname,resolve}from'node:path';import{research,scorePortfolio}from'./services.js';const root=resolve(dirname(fileURLToPath(import.meta.url)),'../web');const allowed=new Set(['index.html','app.js','style.css','dashboard-preview.svg']);const send=(res,status,value)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(value))};export const app=createServer(async(req,res)=>{try{const url=new URL(req.url,'http://localhost');if(req.method==='GET'&&url.pathname==='/api/health')return send(res,200,{ok:true,mode:'research-only',timestamp:new Date().toISOString()});if(req.method==='GET'&&url.pathname==='/api/markets'){const [k,p]=await Promise.allSettled([fetch('https://api.elections.kalshi.com/trade-api/v2/markets?limit=10&status=open',{signal:AbortSignal.timeout(4500)}).then(r=>{if(!r.ok)throw Error('upstream');return r.json()}),fetch('https://gamma-api.polymarket.com/markets?limit=10&active=true&closed=false',{signal:AbortSignal.timeout(4500)}).then(r=>{if(!r.ok)throw Error('upstream');return r.json()})]);return send(res,200,{kalshi:k.status==='fulfilled'?k.value.markets?.map(x=>({id:x.ticker,title:x.title,yesPrice:x.yes_ask})):[],polymarket:p.status==='fulfilled'?p.value.map(x=>({id:x.id,title:x.question,prices:x.outcomePrices})):[],availability:{kalshi:k.status,polymarket:p.status},asOf:new Date().toISOString()})}if(req.method==='GET'&&url.pathname==='/api/disclosures')return send(res,200,{sources:[{name:'SEC EDGAR',url:'https://www.sec.gov/edgar/search/',kind:'Insider ownership filings'},{name:'US House',url:'https://disclosures-clerk.house.gov/FinancialDisclosure',kind:'Congressional disclosures'},{name:'US Senate',url:'https://efdsearch.senate.gov/search/',kind:'Congressional disclosures'}],status:'source-links-only'});if(req.method==='POST'&&['/api/research','/api/risk'].includes(url.pathname)){let raw='';for await(const part of req){raw+=part;if(raw.length>12000)return send(res,413,{error:'Request too large'})}let body;try{body=JSON.parse(raw)}catch{return send(res,400,{error:'Invalid JSON'})}try{if(url.pathname==='/api/risk')return send(res,200,scorePortfolio(body.positions));if(typeof body.question!=='string'||body.question.trim().length<4||body.question.length>1500)return send(res,422,{error:'Question must be 4–1500 characters'});return send(res,200,research(body.question))}catch(e){return send(res,422,{error:e.message})}}if(req.method!=='GET')return send(res,405,{error:'Method not allowed'});const name=url.pathname==='/'?'index.html':url.pathname.slice(1);if(!allowed.has(name))return send(res,404,{error:'Not found'});const bytes=await readFile(name==='dashboard-preview.svg'?resolve(root,'../../docs/images/dashboard-preview.svg'):resolve(root,name));res.writeHead(200,{'Content-Type':name.endsWith('.js')?'application/javascript':name.endsWith('.css')?'text/css':name.endsWith('.svg')?'image/svg+xml':'text/html','X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'self'; style-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'"});res.end(bytes)}catch(e){console.error(e);send(res,500,{error:'Internal server error'})}});if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url))app.listen(Number(process.env.PORT||3000),'0.0.0.0',()=>console.log('MarketreaderPro listening on '+(process.env.PORT||3000)));
+import {createServer} from 'node:http';
+import {readFile} from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
+import {dirname,resolve} from 'node:path';
+import {research,scorePortfolio} from './services.js';
+import {SECURITY_HEADERS,json,createLimiter,readJson,safeIp,requestId} from './security.js';
+import {loadMarkets,disclosureSources} from './markets.js';
+const root=resolve(dirname(fileURLToPath(import.meta.url)),'../web');
+const staticFiles=new Map([['/','index.html'],['/index.html','index.html'],['/app.js','app.js'],['/style.css','style.css'],['/dashboard-preview.svg','dashboard-preview.svg']]);
+const types={html:'text/html; charset=utf-8',js:'text/javascript; charset=utf-8',css:'text/css; charset=utf-8',svg:'image/svg+xml'};
+const limiter=createLimiter({limit:90,windowMs:60000});
+const started=Date.now();
+const listenPort=Number(process.env.PORT??3000);
+export const app=createServer(async(req,res)=>{
+const id=requestId();res.setHeader('X-Request-ID',id);
+try{
+const path=new URL(req.url,'http://localhost').pathname;
+const limited=limiter.allow(safeIp(req));
+if(!limited.allowed)return json(res,429,{error:'Rate limit exceeded',requestId:id},{'Retry-After':String(limited.retryAfter)});
+if(path.startsWith('/api/')){
+  if(path==='/api/health'&&req.method==='GET')return json(res,200,{ok:true,mode:'research-only',uptimeSeconds:Math.floor((Date.now()-started)/1000),timestamp:new Date().toISOString()});
+  if(path==='/api/ready'&&req.method==='GET')return json(res,200,{ready:true,dependencies:'no mandatory remote dependencies',mode:'research-only'});
+  if(path==='/api/markets'&&req.method==='GET')return json(res,200,await loadMarkets());
+  if(path==='/api/disclosures'&&req.method==='GET')return json(res,200,{sources:disclosureSources,status:'source-links-only'});
+  if(path==='/api/research'||path==='/api/risk'){
+    if(req.method!=='POST')return json(res,405,{error:'Method not allowed'},{'Allow':'POST'});
+    const body=await readJson(req);
+    if(body===null||typeof body!=='object'||Array.isArray(body))return json(res,422,{error:'Object expected'});
+    try{
+      if(path==='/api/risk')return json(res,200,scorePortfolio(body.positions));
+      if(typeof body.question!=='string'||body.question.trim().length<4||body.question.length>1500)return json(res,422,{error:'Question must be 4–1500 characters'});
+      return json(res,200,research(body.question.trim()));
+    }catch(e){return json(res,422,{error:e.message})}
+  }
+  return json(res,404,{error:'Unknown endpoint',requestId:id});
+}
+if(req.method!=='GET'&&req.method!=='HEAD')return json(res,405,{error:'Method not allowed'},{'Allow':'GET, HEAD'});
+const filename=staticFiles.get(path);if(!filename)return json(res,404,{error:'Not found'});
+const asset=filename==='dashboard-preview.svg'?resolve(root,'../../docs/images/dashboard-preview.svg'):resolve(root,filename);
+const type=types[filename.split('.').pop()];
+const bytes=await readFile(asset);
+res.writeHead(200,{...SECURITY_HEADERS,'Content-Type':type,'Cache-Control':filename==='index.html'?'no-cache':'public, max-age=300','Content-Length':bytes.length});res.end(req.method==='HEAD'?undefined:bytes);
+}catch(e){if(e.status)return json(res,e.status,{error:e.message,requestId:id});console.error(JSON.stringify({message:'request_error',requestId:id,error:e.name}));if(!res.headersSent)json(res,500,{error:'Internal server error',requestId:id});else res.destroy()}
+});
+app.requestTimeout=10000;app.headersTimeout=15000;app.keepAliveTimeout=5000;
+if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
+if(!Number.isInteger(listenPort)||listenPort<1||listenPort>65535)throw Error('Invalid PORT');
+app.listen(listenPort,'0.0.0.0',()=>console.log(JSON.stringify({message:'marketreaderpro_started',port:listenPort,mode:'research-only'})));
+function shutdown(signal){console.log(JSON.stringify({message:'shutdown',signal}));app.close(()=>process.exit(0));setTimeout(()=>process.exit(1),9000).unref()}
+process.once('SIGINT',()=>shutdown('SIGINT'));process.once('SIGTERM',()=>shutdown('SIGTERM'));
+}

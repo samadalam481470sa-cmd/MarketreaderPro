@@ -1,1 +1,16 @@
-{"name":"marketreaderpro","version":"0.1.0","private":true,"type":"module","scripts":{"start":"node apps/api/server.js","dev":"node apps/api/server.js","test":"node --test tests/*.test.js"},"engines":{"node":">=20"}}
+{
+  "name": "marketreaderpro",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node apps/api/server.js",
+    "dev": "node --watch apps/api/server.js",
+    "test": "node --test tests/*.test.js",
+    "check": "node --check apps/api/server.js && node --check apps/api/security.js && node --check apps/api/markets.js && node --check apps/web/app.js",
+    "verify": "npm run check && npm test"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
