@@ -9,6 +9,7 @@ import {configured,getPool,readHistory,stats,closePool} from './database.js';
 import {register,login,authenticate,logout,paperOrder,paperPortfolio} from './accounts.js';
 import {aiResearch} from './ai.js';
 import {fetchSecFilings} from './sec.js';
+import {createLinkToken,exchangeBankToken,listBankAccounts,unlinkBank} from './banking.js';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../web');
 const staticFiles=new Map([['/','index.html'],['/index.html','index.html'],['/app.js','app.js'],['/style.css','style.css'],['/dashboard-preview.svg','dashboard-preview.svg']]);
 const types={html:'text/html; charset=utf-8',js:'text/javascript; charset=utf-8',css:'text/css; charset=utf-8',svg:'image/svg+xml'};
@@ -58,6 +59,19 @@ if(path.startsWith('/api/')){
       if(path==='/api/account')return json(res,200,{user:{id:user.id,email:user.email},paper:await paperPortfolio(db,user.id)});
       return json(res,201,await paperOrder(db,user.id,await readJson(req)));
     }catch(e){return json(res,e.status||500,{error:e.status?e.message:'Account operation failed',requestId:id})}
+  }
+  if(['/api/banking/link-token','/api/banking/exchange','/api/banking/accounts','/api/banking/unlink'].includes(path)){
+    if(!configured())return json(res,503,{error:'PostgreSQL required'});
+    const expected=path==='/api/banking/accounts'?'GET':'POST';
+    if(req.method!==expected)return json(res,405,{error:'Method not allowed'});
+    try{
+      const db=await getPool(),user=await authenticate(db,req.headers.authorization);
+      if(path==='/api/banking/link-token')return json(res,200,await createLinkToken(user.id));
+      if(path==='/api/banking/accounts')return json(res,200,await listBankAccounts(db,user.id));
+      const body=await readJson(req);
+      if(path==='/api/banking/exchange')return json(res,200,await exchangeBankToken(db,user.id,body?.publicToken));
+      return json(res,200,await unlinkBank(db,user.id,body?.connectionId));
+    }catch(e){return json(res,e.status||503,{error:e.status?e.message:'Bank integration unavailable'})}
   }
   if(path==='/api/markets'&&req.method==='GET')return json(res,200,await loadMarkets());
   if(path==='/api/disclosures'&&req.method==='GET')return json(res,200,{sources:disclosureSources,status:'source-links-only'});

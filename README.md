@@ -59,8 +59,9 @@ Sample request:
 curl -X POST http://localhost:3000/api/risk -H 'content-type: application/json' -d '{"positions":[{"symbol":"ETF-A","value":600},{"symbol":"ETF-B","value":400}]}'
 ```
 
-## Additional working modules (v0.4)
+## Additional working modules (v0.5)
 
+- Credential-gated Plaid backend Link-token issuance, token exchange, encrypted server-side token storage, read-only account fetching, and connection revocation. Plaid Link frontend interaction and provider approval still required; no banking credentials collected by the app.
 - PostgreSQL-backed user registration, password verification, revocable bearer sessions and multi-user simulated trading balances and positions.
 - Optional hosted model-generated educational research through server-configured `AI_API_KEY` and `AI_MODEL`, with transparent rule-based fallback.
 - Read-only SEC filing metadata lookup by CIK. Configure `SEC_USER_AGENT` with an organization and contact email.

@@ -8,7 +8,7 @@
 - Existing public Kalshi/Polymarket market feeds and snapshot storage.
 
 ## Banking
-A real Plaid integration uses Link initialization and public-token exchange, followed by encrypted server-side access-token storage and revocation handling. It is **not implemented** and must not be simulated as linked banking. Refer to https://plaid.com/docs/link/ . Never ask users to type bank credentials into MarketreaderPro.
+A real Plaid integration uses Link initialization and public-token exchange, followed by encrypted server-side access-token storage and revocation handling. The backend Link-token exchange, encrypted access-token storage, read-only account retrieval and revocation are now implemented. **The official browser Link flow, production partner onboarding, webhook handling, encryption key rotation and real provider end-to-end verification are not finished.** Refer to https://plaid.com/docs/link/ . Never ask users to type bank credentials into MarketreaderPro.
 
 ## Brokerage
 Alpaca publishes separate paper and live trading credentials, see https://docs.alpaca.markets/us/docs/trading-api . This app **does not submit live brokerage orders**. Use approved regulated counterparties, account authorization, and order-risk controls before enabling any live path.
