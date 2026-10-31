@@ -38,3 +38,9 @@ jobs:
         run: node scripts/verify-db.js
       - name: Docker build
         run: docker build -t marketreaderpro:ci .
+      - name: Boot container and smoke test
+        run: |
+          docker run -d --name mrp-smoke -p 127.0.0.1:31987:3000 -e ENABLE_EXPERIMENTAL_FEATURES=false marketreaderpro:ci
+          for i in $(seq 1 12); do if curl --fail --silent http://127.0.0.1:31987/api/health >/dev/null; then break; fi; sleep 1; done
+          SMOKE_URL=http://127.0.0.1:31987 npm run smoke
+          docker rm -f mrp-smoke

@@ -1,6 +1,6 @@
 {
   "name": "marketreaderpro",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -12,7 +12,8 @@
     "db:migrate": "node scripts/migrate.js",
     "db:ingest": "node scripts/ingest.js",
     "sec:ingest": "node scripts/ingest-sec.js",
-    "agent:test": "python3 -m unittest discover -s tests_py -v"
+    "agent:test": "python3 -m unittest discover -s tests_py -v",
+    "smoke": "node scripts/smoke.js"
   },
   "dependencies": {
     "pg": "^8.23.1"

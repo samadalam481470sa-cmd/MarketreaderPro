@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {app} from '../apps/api/server.js';
+async function base(){if(!app.listening)await new Promise(r=>app.listen(0,'127.0.0.1',r));return 'http://127.0.0.1:'+app.address().port}
+test.after(()=>app.close());
+test('public mode disables unreviewed financial workflows',async()=>{const original=process.env.ENABLE_EXPERIMENTAL_FEATURES;delete process.env.ENABLE_EXPERIMENTAL_FEATURES;try{const origin=await base();for(const path of ['/api/auth/login','/api/ai/research','/api/banking/link-token','/api/paper/orders']){const r=await fetch(origin+path,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});assert.equal(r.status,503,path)}}finally{if(original!==undefined)process.env.ENABLE_EXPERIMENTAL_FEATURES=original}});
+test('capabilities never claim live trading',async()=>{const r=await fetch(await base()+'/api/capabilities');const d=await r.json();assert.equal(d.liveTrading,false);assert.equal(d.liveBankTransfers,false)});

@@ -26,6 +26,12 @@ python3 -m agent propose
 
 See [GPU agent installation, power behavior and privacy controls](docs/LOCAL_GPU_AGENT.md). Research is non-trading and opt-in.
 
+## Public deployment safety
+
+Version 0.8 defaults to safe research-only mode. Experimental banking, user accounts, AI completion and paper orders are blocked unless `ENABLE_EXPERIMENTAL_FEATURES=true` is explicitly configured for a reviewed sandbox. The GPU agent is opt-in on the user's awake computer and is not part of the cloud backend.
+
+See [Production release checklist](docs/PRODUCTION_RELEASE.md) and run `npm run smoke` after launching.
+
 ## Run locally
 
 Requires Node.js 22+. PostgreSQL is optional for the public dashboard and required for persistence.

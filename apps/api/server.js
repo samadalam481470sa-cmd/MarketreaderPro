@@ -16,6 +16,7 @@ const types={html:'text/html; charset=utf-8',js:'text/javascript; charset=utf-8'
 const limiter=createLimiter({limit:90,windowMs:60000});
 const started=Date.now();
 const listenPort=Number(process.env.PORT??3000);
+const experimentalEnabled=()=>process.env.ENABLE_EXPERIMENTAL_FEATURES==='true';
 export const app=createServer(async(req,res)=>{
 const id=requestId();res.setHeader('X-Request-ID',id);
 try{
@@ -25,6 +26,7 @@ if(!limited.allowed)return json(res,429,{error:'Rate limit exceeded',requestId:i
 if(path.startsWith('/api/')){
   if(path==='/api/health'&&req.method==='GET')return json(res,200,{ok:true,mode:'research-only',uptimeSeconds:Math.floor((Date.now()-started)/1000),timestamp:new Date().toISOString()});
   if(path==='/api/ready'&&req.method==='GET')return json(res,200,{ready:true,dependencies:'no mandatory remote dependencies',mode:'research-only'});
+  if(path==='/api/capabilities'&&req.method==='GET')return json(res,200,{mode:'public-research',experimental:experimentalEnabled(),liveTrading:false,liveBankTransfers:false,localGpuInBrowser:false});
   if(path==='/api/db/status'&&req.method==='GET'){
     if(!configured())return json(res,503,{configured:false,error:'Database is not configured'});
     try{return json(res,200,{configured:true,...await stats(await getPool())})}catch{return json(res,503,{configured:true,error:'Database unavailable'})}
@@ -42,12 +44,14 @@ if(path.startsWith('/api/')){
     catch(e){return json(res,e.status||502,{error:e.status?e.message:'SEC source unavailable'})}
   }
   if(path==='/api/ai/research'){
+    if(!experimentalEnabled())return json(res,503,{error:'Experimental AI research disabled'});
     if(req.method!=='POST')return json(res,405,{error:'Method not allowed'},{Allow:'POST'});
     const body=await readJson(req);
     try{return json(res,200,await aiResearch(body?.question))}
     catch(e){return json(res,e.status||502,{error:e.status?e.message:'AI research unavailable'})}
   }
   if(['/api/auth/register','/api/auth/login','/api/auth/logout','/api/account','/api/paper/orders'].includes(path)){
+    if(!experimentalEnabled())return json(res,503,{error:'Experimental accounts and simulation disabled'});
     if(!configured())return json(res,503,{error:'PostgreSQL is required for accounts'});
     if(['/api/account'].includes(path)?req.method!=='GET':req.method!=='POST')return json(res,405,{error:'Method not allowed'});
     try{
@@ -61,6 +65,7 @@ if(path.startsWith('/api/')){
     }catch(e){return json(res,e.status||500,{error:e.status?e.message:'Account operation failed',requestId:id})}
   }
   if(['/api/banking/link-token','/api/banking/exchange','/api/banking/accounts','/api/banking/unlink'].includes(path)){
+    if(!experimentalEnabled())return json(res,503,{error:'Experimental banking disabled'});
     if(!configured())return json(res,503,{error:'PostgreSQL required'});
     const expected=path==='/api/banking/accounts'?'GET':'POST';
     if(req.method!==expected)return json(res,405,{error:'Method not allowed'});
