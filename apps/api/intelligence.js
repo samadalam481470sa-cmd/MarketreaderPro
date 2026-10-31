@@ -7,6 +7,7 @@ import {discoverNews} from './broad-news.js';
 import {discoverMarketUniverse} from './market-universe.js';
 import {coverageSummary} from './coverage.js';
 import {recordSourceChecks} from './quality-monitor.js';
+import {refreshSourceIncidents} from './quality-alerts.js';
 import {validateNewsRecord,validateMarketRecord,inspectBriefing,rankNews} from './data-quality.js';
 
 export const PUBLIC_FEEDS=Object.freeze([
@@ -115,6 +116,7 @@ export async function ingestIntelligence(db,{fetcher=fetch,marketLoader=discover
   const cover=coverageSummary({newsStatus:{...officialStatus,...newsStatus},markets:{kalshi:{status:errors.kalshi?'partial':'ok',items:marketTotals.kalshi},polymarket:{status:errors.polymarket?'partial':'ok',items:marketTotals.polymarket}},sec:secStatus,errors});
   for(const entry of cover.sources){await db.query(`INSERT INTO source_coverage(source_name,last_status,item_count,last_success_at) VALUES($1,$2,$3,CASE WHEN $2='ok' THEN now() ELSE NULL END) ON CONFLICT(source_name) DO UPDATE SET last_attempt_at=now(),last_status=EXCLUDED.last_status,item_count=EXCLUDED.item_count,last_success_at=CASE WHEN EXCLUDED.last_status='ok' THEN now() ELSE source_coverage.last_success_at END`,[entry.name,entry.status,entry.items||0])}
   await recordSourceChecks(db,cover.sources,{now});
+  await refreshSourceIncidents(db,{now:now.getTime()});
   const day=localDate(now);
   const briefing=await enrichBriefing({...buildBriefing({day,items:prioritized,markets,filings,errors}),coverageReport:cover});
   await db.query(`INSERT INTO daily_briefings(briefing_date,timezone,title,body)

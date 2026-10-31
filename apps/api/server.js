@@ -19,6 +19,7 @@ import {analyzePortfolio} from './portfolio-risk/index.js';
 import {runPortfolioRebalance} from './portfolio-rebalance/engine.js';
 import {runWalkForward} from './walk-forward/engine.js';
 import {loadSourceHealth} from './quality-monitor.js';
+import {listSourceIncidents} from './quality-alerts.js';
 import {listDatasets,readDataset} from './history-import/store.js';
 import {buildHistoricalResearch} from './research-lab.js';
 import {timestampQuality} from './data-quality.js';
@@ -44,6 +45,16 @@ if(path.startsWith('/api/')){
     const data=await readJson(req,600000);
     try{return json(res,200,runWalkForward(data))}
     catch(e){return json(res,e.status===422?422:500,{error:e.status===422?e.message:'Walk-forward evaluation failed',requestId:id})}
+  }
+  if(path==='/api/source-incidents'&&req.method==='GET'){
+    if(!configured())return json(res,200,{configured:false,alerts:[],open:0,shown:0});
+    try{
+      const query=new URL(req.url,'http://localhost').searchParams;
+      const limit=Number(query.get('limit')??30);
+      const includeResolved=query.get('resolved')==='true';
+      return json(res,200,{configured:true,
+        ...await listSourceIncidents(await getPool(),{limit,includeResolved})});
+    }catch(e){return json(res,e.status||503,{error:e.status?e.message:'Source incidents unavailable'})}
   }
   if(path==='/api/data-health'&&req.method==='GET'){
     if(!configured())return json(res,200,{configured:false,overall:'unconfigured',
