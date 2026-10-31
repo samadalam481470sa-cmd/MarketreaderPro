@@ -44,6 +44,8 @@ jobs:
       - run: npm run db:migrate
       - name: Check PostgreSQL schema
         run: node scripts/verify-db.js
+      - name: PostgreSQL ingestion and source-health integration tests
+        run: node --test tests_db/*.test.js
       - name: Docker build
         run: docker build -t marketreaderpro:ci .
       - name: Boot container and smoke test

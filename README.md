@@ -45,6 +45,15 @@ Open **http://localhost:3000**. The startup scripts migrate PostgreSQL, attempt 
 
 A lighter read-only run is possible with `npm install && npm start`, but historical/briefing features require a configured database. This is a downloadable application source package, **not a signed native desktop installer**.
 
+## Historical import, walk-forward and data quality (v1.7)
+
+- **Operator-only historical archive:** validated, permission-annotated OHLC close CSV imports into immutable PostgreSQL datasets; deduplication by SHA-256. Run `npm run history:import -- --file ./prices.csv --source "Authorized provider" --license "Permitted internal research"`. Run `npm run history:catalog` to inspect stored sources. Historical data API export is off by default and requires `MRP_PUBLIC_HISTORY=true`.
+- **Causal multi-asset walk-forward testing:** train/test windows, optional purged periods, equal-weight/inverse-volatility/momentum baselines, fee-aware simulated performance on untouched folds. Open **Walk-forward Lab** in the dashboard.
+- **Source-health monitoring:** actual collection attempts, failure ratios, freshness warnings and a dedicated status API/dashboard. Run `GET /api/data-health`.
+- **Database integration tests:** import deduplication, provenance, default-private data routes, and real persisted source status after migrations.
+
+[History importer guide](docs/HISTORY_IMPORT.md) · [Walk-forward methodology](docs/WALK_FORWARD.md) · [Source health](docs/SOURCE_HEALTH.md).
+
 ## Portfolio rebalancing laboratory
 
 The **Rebalancing Lab** accepts aligned historical closing-price CSVs, then simulates long-only target-weight rebalancing with explicit costs, drift thresholds and a **next-close execution delay**. It compares portfolio return/drawdown against fee-aware passive buy-and-hold, and exposes an auditable trade ledger and final weights. [Methodology](docs/PORTFOLIO_REBALANCING.md). Source prices are supplied by the user and are not independently authenticated.

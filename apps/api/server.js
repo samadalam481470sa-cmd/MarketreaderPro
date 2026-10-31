@@ -17,10 +17,13 @@ import {technicalAnalysis} from './indicators.js';
 import {runBacktest} from './backtest/index.js';
 import {analyzePortfolio} from './portfolio-risk/index.js';
 import {runPortfolioRebalance} from './portfolio-rebalance/engine.js';
+import {runWalkForward} from './walk-forward/engine.js';
+import {loadSourceHealth} from './quality-monitor.js';
+import {listDatasets,readDataset} from './history-import/store.js';
 import {buildHistoricalResearch} from './research-lab.js';
 import {timestampQuality} from './data-quality.js';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../web');
-const staticFiles=new Map([['/','index.html'],['/index.html','index.html'],['/app.js','app.js'],['/style.css','style.css'],['/dashboard-preview.svg','dashboard-preview.svg'],['/intelligence-dashboard.svg','intelligence-dashboard.svg'],['/government-dashboard.svg','government-dashboard.svg'],['/backtest-ui.js','backtest-ui.js'],['/csv.js','csv.js'],['/portfolio-csv.js','portfolio-csv.js'],['/portfolio-risk-ui.js','portfolio-risk-ui.js'],['/portfolio-rebalance-ui.js','portfolio-rebalance-ui.js']]);
+const staticFiles=new Map([['/','index.html'],['/index.html','index.html'],['/app.js','app.js'],['/style.css','style.css'],['/dashboard-preview.svg','dashboard-preview.svg'],['/intelligence-dashboard.svg','intelligence-dashboard.svg'],['/government-dashboard.svg','government-dashboard.svg'],['/backtest-ui.js','backtest-ui.js'],['/csv.js','csv.js'],['/portfolio-csv.js','portfolio-csv.js'],['/portfolio-risk-ui.js','portfolio-risk-ui.js'],['/portfolio-rebalance-ui.js','portfolio-rebalance-ui.js'],['/walk-forward-ui.js','walk-forward-ui.js'],['/quality-health-ui.js','quality-health-ui.js']]);
 const types={html:'text/html; charset=utf-8',js:'text/javascript; charset=utf-8',css:'text/css; charset=utf-8',svg:'image/svg+xml'};
 const limiter=createLimiter({limit:90,windowMs:60000});
 const started=Date.now();
@@ -36,6 +39,31 @@ if(path.startsWith('/api/')){
   if(path==='/api/health'&&req.method==='GET')return json(res,200,{ok:true,mode:'research-only',uptimeSeconds:Math.floor((Date.now()-started)/1000),timestamp:new Date().toISOString()});
   if(path==='/api/ready'&&req.method==='GET')return json(res,200,{ready:true,dependencies:'no mandatory remote dependencies',mode:'research-only'});
   if(path==='/api/capabilities'&&req.method==='GET')return json(res,200,{mode:'public-research',experimental:experimentalEnabled(),liveTrading:false,liveBankTransfers:false,localGpuInBrowser:false});
+  if(path==='/api/walk-forward'){
+    if(req.method!=='POST')return json(res,405,{error:'Method not allowed'},{Allow:'POST'});
+    const data=await readJson(req,600000);
+    try{return json(res,200,runWalkForward(data))}
+    catch(e){return json(res,e.status===422?422:500,{error:e.status===422?e.message:'Walk-forward evaluation failed',requestId:id})}
+  }
+  if(path==='/api/data-health'&&req.method==='GET'){
+    if(!configured())return json(res,200,{configured:false,overall:'unconfigured',
+      sources:[],warning:'Connect PostgreSQL and run intelligence collection'});
+    try{return json(res,200,{configured:true,sourceOfTruth:'PostgreSQL source_coverage and source_health_events',
+      ...await loadSourceHealth(await getPool())})}
+    catch{return json(res,503,{error:'Source health unavailable',requestId:id})}
+  }
+  if((path==='/api/historical-catalog'||path==='/api/historical-dataset')&&req.method==='GET'){
+    if(process.env.MRP_PUBLIC_HISTORY!=='true')
+      return json(res,403,{error:'Imported historical datasets are private by default; API access disabled'});
+    if(!configured())return json(res,503,{error:'PostgreSQL is required'});
+    try{
+      const db=await getPool(),query=new URL(req.url,'http://localhost').searchParams;
+      if(path==='/api/historical-catalog')
+        return json(res,200,await listDatasets(db,{limit:Number(query.get('limit')??20)}));
+      const dataset=await readDataset(db,{datasetId:query.get('id')});
+      return dataset?json(res,200,dataset):json(res,404,{error:'Historical dataset not found'});
+    }catch(e){return json(res,e.status||503,{error:e.status?e.message:'Historical dataset query unavailable'})}
+  }
   if(path==='/api/portfolio-rebalance'){
     if(req.method!=='POST')return json(res,405,{error:'Method not allowed'},{Allow:'POST'});
     const data=await readJson(req,600000);

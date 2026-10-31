@@ -79,3 +79,19 @@ aside .sidebar-status{margin-top:auto;flex:none}
 .rebalance-table th:first-child,.rebalance-table td:first-child{text-align:left}
 @media(max-width:850px){.rebalance-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:500px){.rebalance-metrics{grid-template-columns:1fr}}
+
+/* Out-of-sample research and operational feed health. */
+.walk-forward-panel .eyebrow{display:block;color:#71dccc;letter-spacing:1.4px;font-size:11px}
+.walk-forward-panel form{margin-top:16px}
+.walk-forward-result{margin-top:18px;overflow-x:auto}
+.walk-forward-table{border-collapse:collapse;width:100%;font-size:13px}
+.walk-forward-table td,.walk-forward-table th{padding:12px 10px;text-align:right;border-bottom:1px solid #2d455c}
+.walk-forward-table td:first-child,.walk-forward-table th:first-child{text-align:left}
+.walk-forward-metric{border:1px solid #28475c;border-radius:10px;padding:17px;background:#112a39}
+.walk-forward-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.walk-forward-metric small,.walk-forward-metric strong{display:block}
+.walk-forward-metric strong{font-size:22px;margin-top:9px}
+.health-row{display:flex;justify-content:space-between;gap:12px;border-top:1px solid #29435a;padding:11px 0;font-size:13px}
+.health-row strong{font-size:12px}
+.health-healthy{color:#70dfbe}.health-degraded,.health-stale{color:#ffca75}.health-critical,.health-unknown{color:#ff8794}
+@media(max-width:720px){.walk-forward-stats{grid-template-columns:1fr}}

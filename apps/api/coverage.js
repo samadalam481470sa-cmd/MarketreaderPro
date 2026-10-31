@@ -5,7 +5,7 @@ export const COVERAGE_TARGETS=Object.freeze({
 });
 export function coverageSummary({newsStatus={},markets={},sec={},errors={}}={}){
  const sources=[
-  ...Object.entries(newsStatus).map(([name,value])=>({name:'gdelt-'+name,...value})),
+  ...Object.entries(newsStatus).map(([name,value])=>({name:(name==='federal-reserve'||name==='bls'?'official-':'gdelt-')+name,...value})),
   ...Object.entries(markets).map(([name,value])=>({name:'market-'+name,...value})),
   ...Object.entries(sec).map(([name,value])=>({name:'sec-'+name,...value}))
  ];
