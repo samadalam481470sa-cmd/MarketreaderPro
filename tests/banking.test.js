@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {sealToken,openToken,createLinkToken,exchangeBankToken,listBankAccounts} from '../apps/api/banking.js';
 const key='ef'.repeat(32),env={PLAID_CLIENT_ID:'client',PLAID_SECRET:'secret',BANK_TOKEN_KEY:key,PLAID_ENV:'sandbox'};
-test('bank access tokens encrypted and authenticated',()=>{const encrypted=sealToken('access-abc',key);assert.notMatch(encrypted,/access-abc/);assert.equal(openToken(encrypted,key),'access-abc');assert.throws(()=>openToken(encrypted.slice(0,-2)+'ab',key))});
+test('bank access tokens encrypted and authenticated',()=>{const encrypted=sealToken('access-abc',key);assert.doesNotMatch(encrypted,/access-abc/);assert.equal(openToken(encrypted,key),'access-abc');const tampered=Buffer.from(encrypted,'base64');tampered[30]^=1;assert.throws(()=>openToken(tampered.toString('base64'),key))});
 test('link tokens require provider config',async()=>{await assert.rejects(createLinkToken('u',{env:{}}))});
 test('link token targets sandbox provider',async()=>{const d=await createLinkToken('user-id',{env,fetcher:async(url,options)=>{assert.match(url,/sandbox.plaid.com\/link\/token\/create/);assert.match(options.body,/transactions/);return {ok:true,json:async()=>({link_token:'link-abc'})}}});assert.equal(d.linkToken,'link-abc')});
 test('exchange stores ciphertext and not cleartext',async()=>{let params;const db={query:async(sql,args)=>{params=args;return {rows:[]}}};await exchangeBankToken(db,'user-1','public-token-example',{env,fetcher:async()=>({ok:true,json:async()=>({access_token:'access-secret',item_id:'item-1'})})});assert.equal(params[1],'item-1');assert.notEqual(params[2],'access-secret');assert.equal(openToken(params[2],key),'access-secret')});
