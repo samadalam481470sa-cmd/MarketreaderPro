@@ -36,3 +36,30 @@ async function intelligence(){const state=$('#intelligence-state'),root=$('#inte
 req('/api/coverage').then(d=>{const root=$('#coverage-report');root.replaceChildren(el('p',d.configured?'Database coverage monitoring active':'Configure PostgreSQL and run the intelligence job to record coverage.'));for(const s of d.sources||[])root.append(el('p',s.source_name+' · '+s.last_status+' · '+s.item_count+' items · '+(s.last_success_at||'never succeeded')))}).catch(e=>{$('#coverage-report').textContent=e.message});
 
 async function governmentRecords(){const choices=[['/api/government/sec-transactions?limit=20','#government-sec','rows'],['/api/government/filings?source=house','#government-house','rows']];for(const [endpoint,target] of choices){const root=$(target);root.textContent='Loading…';try{const data=await req(endpoint);root.replaceChildren();if(!data.rows.length){root.append(el('p','No records imported yet. See the government disclosure setup guide.'));continue}for(const record of data.rows){const line=el('p',''),a=el('a',endpoint.includes('sec-transactions')?[record.issuer_ticker||'Unknown issuer',record.transaction_date||'No date',record.transaction_code||'Unspecified'].join(' · '):[record.filer_name||'Unspecified filer',record.filed_date||'No date',record.document_type].join(' · '));a.href=record.source_url||record.document_url;a.target='_blank';a.rel='noopener noreferrer';line.append(a);root.append(line)}}catch(e){root.textContent=e.message}}}$('#government-refresh').addEventListener('click',governmentRecords);governmentRecords();
+
+const overviewEntry=(title,details,source,url)=>{const r=el('div','');r.className='data-row';const left=el('div','');const label=el('strong',title);if(url){const a=el('a',title);a.href=url;a.rel='noopener noreferrer';a.target='_blank';label.replaceChildren(a)}left.append(label,el('small',details));r.append(left,el('span',source));return r};
+async function updateOverview(){
+ try{
+  const d=await req('/api/markets');const root=$('#overview-markets');root.replaceChildren();
+  const sources=['kalshi','polymarket'].filter(name=>d.availability?.[name]==='fulfilled');
+  $('#overview-market-count').textContent=sources.length+' / 2';
+  $('#overview-market-status').textContent='Data retrieved '+new Date(d.asOf).toLocaleTimeString();
+  let n=0;
+  for(const source of ['kalshi','polymarket'])for(const market of (d[source]||[]).slice(0,3)){
+   root.append(overviewEntry(market.title,source==='kalshi'?'Yes ask (cents): '+(market.yesPrice??'N/A'):'Outcome prices: '+(market.prices??'N/A'),source.toUpperCase()));n++;
+  }
+  if(!n)root.textContent='Public feeds unavailable. No prices are fabricated.';
+ }catch(e){$('#overview-market-count').textContent='—';$('#overview-markets').textContent='Market data unavailable: '+e.message}
+ try{
+  const data=await req('/api/intelligence'),b=data.briefing,root=$('#overview-headlines');root.replaceChildren();
+  $('#overview-briefing-status').textContent=b?.quality?.status||'None';
+  $('#overview-briefing-date').textContent=b?'Generated '+new Date(b.generatedAt).toLocaleDateString():'Run the intelligence ingestion job';
+  const entries=(b?.sections||[]).filter(x=>/news/i.test(x.title)).flatMap(x=>x.entries).slice(0,5);
+  for(const e of entries)root.append(overviewEntry(e.title,(e.source||'Source')+(e.publishedAt?' · '+new Date(e.publishedAt).toLocaleDateString():''),e.freshness||'linked',e.url));
+  if(!entries.length)root.textContent='No saved headlines yet. PostgreSQL ingestion is required.';
+ }catch(e){$('#overview-briefing-status').textContent='—';$('#overview-headlines').textContent='Intelligence unavailable: '+e.message}
+ try{const d=await req('/api/coverage');$('#overview-source-count').textContent=d.sources?.length??0;$('#overview-source-status').textContent=d.configured?'Ingestion sources recorded':'PostgreSQL not configured'}catch{$('#overview-source-count').textContent='—'}
+ try{const d=await req('/api/government/sec-transactions?limit=3');$('#overview-filings').textContent=d.rows?.length?d.rows.length+' indexed SEC transactions. View source documents below.':'No Form 4 transactions imported yet.'}catch{$('#overview-filings').textContent='Government filings require a configured database.'}
+}
+$('#dashboard-refresh').addEventListener('click',()=>{updateOverview();markets();intelligence()});
+updateOverview();
