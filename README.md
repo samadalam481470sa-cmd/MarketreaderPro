@@ -34,7 +34,7 @@ Read **[Deployment and security checklist](docs/DEPLOYMENT.md)** before exposing
 
 ## Included
 
-- Responsive web dashboard with original SVG illustration and a historical market database explorer.
+- Responsive web dashboard with original SVG illustration, historical database explorer, student simulation accounts, and SEC filing lookup.
 - Public Kalshi/Polymarket best-effort connectors, individual upstream failure handling, request timeouts, response-field allowlists and a 30-second cache.
 - Official SEC / US House / US Senate disclosure source links (not scraping/analysis).
 - Explainable, rule-based *educational* research responses; no connected language model.
@@ -58,6 +58,13 @@ Sample request:
 ```bash
 curl -X POST http://localhost:3000/api/risk -H 'content-type: application/json' -d '{"positions":[{"symbol":"ETF-A","value":600},{"symbol":"ETF-B","value":400}]}'
 ```
+
+## Additional working modules (v0.4)
+
+- PostgreSQL-backed user registration, password verification, revocable bearer sessions and multi-user simulated trading balances and positions.
+- Optional hosted model-generated educational research through server-configured `AI_API_KEY` and `AI_MODEL`, with transparent rule-based fallback.
+- Read-only SEC filing metadata lookup by CIK. Configure `SEC_USER_AGENT` with an organization and contact email.
+- See [integrations and limitations](docs/INTEGRATIONS.md). None of these are real broker trades or full SEC transaction extraction.
 
 ## Still needed for actual financial-product production readiness
 

@@ -2,3 +2,5 @@
 .hero-art{margin:0 0 30px}.hero-art img{display:block;width:100%;height:auto;border:1px solid #284158;border-radius:14px}.hero-art figcaption{font-size:12px;color:#94acc4;padding-top:8px}
 
 .status-pill{border:1px solid #3a5c70;padding:8px 12px;border-radius:18px;color:#6de6c8;font-size:13px}select{width:100%;background:#0a1729;border:1px solid #3a506b;border-radius:8px;padding:13px;color:white;margin-top:8px;font:inherit}.observations{max-height:300px;overflow:auto}.observations p{padding:9px;border-bottom:1px solid #2e4057}
+
+#paper,#sec{scroll-margin-top:25px}#paper-balance{font-variant-numeric:tabular-nums}#auth-message,#paper-message{color:#7de5ca}#sec-result a{color:#7de5ca}#sec-result{max-height:420px;overflow:auto}

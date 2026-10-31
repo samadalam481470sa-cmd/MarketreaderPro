@@ -6,6 +6,9 @@ import {research,scorePortfolio} from './services.js';
 import {SECURITY_HEADERS,json,createLimiter,readJson,safeIp,requestId} from './security.js';
 import {loadMarkets,disclosureSources} from './markets.js';
 import {configured,getPool,readHistory,stats,closePool} from './database.js';
+import {register,login,authenticate,logout,paperOrder,paperPortfolio} from './accounts.js';
+import {aiResearch} from './ai.js';
+import {fetchSecFilings} from './sec.js';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../web');
 const staticFiles=new Map([['/','index.html'],['/index.html','index.html'],['/app.js','app.js'],['/style.css','style.css'],['/dashboard-preview.svg','dashboard-preview.svg']]);
 const types={html:'text/html; charset=utf-8',js:'text/javascript; charset=utf-8',css:'text/css; charset=utf-8',svg:'image/svg+xml'};
@@ -31,6 +34,30 @@ if(path.startsWith('/api/')){
     const limit=Number(u.searchParams.get('limit')||100);
     try{return json(res,200,await readHistory(await getPool(),{source:u.searchParams.get('source'),externalId:u.searchParams.get('id'),limit}))}
     catch(e){if(e.message.startsWith('Invalid')||e.message.startsWith('Limit'))return json(res,422,{error:e.message});return json(res,503,{error:'Database unavailable'})}
+  }
+  if(path==='/api/sec/filings'&&req.method==='GET'){
+    const cik=new URL(req.url,'http://localhost').searchParams.get('cik');
+    try{return json(res,200,{cik,filings:await fetchSecFilings(cik),note:'SEC Form 4 metadata, not parsed trades'})}
+    catch(e){return json(res,e.status||502,{error:e.status?e.message:'SEC source unavailable'})}
+  }
+  if(path==='/api/ai/research'){
+    if(req.method!=='POST')return json(res,405,{error:'Method not allowed'},{Allow:'POST'});
+    const body=await readJson(req);
+    try{return json(res,200,await aiResearch(body?.question))}
+    catch(e){return json(res,e.status||502,{error:e.status?e.message:'AI research unavailable'})}
+  }
+  if(['/api/auth/register','/api/auth/login','/api/auth/logout','/api/account','/api/paper/orders'].includes(path)){
+    if(!configured())return json(res,503,{error:'PostgreSQL is required for accounts'});
+    if(['/api/account'].includes(path)?req.method!=='GET':req.method!=='POST')return json(res,405,{error:'Method not allowed'});
+    try{
+      const db=await getPool();
+      if(path==='/api/auth/register')return json(res,201,{user:await register(db,await readJson(req))});
+      if(path==='/api/auth/login')return json(res,200,await login(db,await readJson(req)));
+      const user=await authenticate(db,req.headers.authorization);
+      if(path==='/api/auth/logout'){await logout(db,user.session_id);return json(res,200,{ok:true})}
+      if(path==='/api/account')return json(res,200,{user:{id:user.id,email:user.email},paper:await paperPortfolio(db,user.id)});
+      return json(res,201,await paperOrder(db,user.id,await readJson(req)));
+    }catch(e){return json(res,e.status||500,{error:e.status?e.message:'Account operation failed',requestId:id})}
   }
   if(path==='/api/markets'&&req.method==='GET')return json(res,200,await loadMarkets());
   if(path==='/api/disclosures'&&req.method==='GET')return json(res,200,{sources:disclosureSources,status:'source-links-only'});
