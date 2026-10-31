@@ -3,6 +3,8 @@ import {runPortfolioRebalance} from '../portfolio-rebalance/engine.js';
 import {validateRebalanceOptions} from '../portfolio-rebalance/options.js';
 import {planFolds,validateWalkForwardOptions} from './options.js';
 import {calculateTrainingWeights,trainingDiagnostics} from './weights.js';
+import {evaluateHoldout,stabilityDiagnostics} from './holdout.js';
+import {costSensitivity} from './cost-stress.js';
 
 /**
  * Strictly causal walk-forward research.
@@ -71,6 +73,10 @@ export function runWalkForward(input){
    outperformingPassiveShare:rows.filter(x=>x.totalReturn>x.passiveReturn).length/rows.length
   };
  }
+ const holdout=evaluateHoldout(folds,methods);
+ const stability=stabilityDiagnostics(folds,methods);
+ const sensitivity=input.walkForward?.includeCostStress===true?
+  costSensitivity(portfolio,folds,methods,execution):null;
  const selected=methods.map(method=>({method,...metrics[method]}))
   .sort((a,b)=>b.averageOutOfSampleReturn-a.averageOutOfSampleReturn);
  return {
@@ -84,7 +90,7 @@ export function runWalkForward(input){
    firstFill:'First available test close, after training window and purge gap',
    interval:execution.rebalanceEvery,initialCashPerFold:execution.initialCash
   },
-  folds,metrics,
+  folds,metrics,holdout,stability,costSensitivity:sensitivity,
   descriptiveRanking:selected,
   interpretation:'Arithmetic fold averages are not compounded deployable portfolio returns.',
   warnings:[
