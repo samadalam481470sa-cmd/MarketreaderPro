@@ -51,7 +51,7 @@ export function buildBriefing({day,items=[],markets=[],filings=[],errors={}}){
  const brief={
   date:day,title:'MarketreaderPro morning intelligence — '+day,
   generatedAt:new Date().toISOString(),mode:'source-backed automatic digest',
-  coverage:'Official macro news, bounded GDELT cross-publisher discovery, paginated public prediction markets and configured SEC CIK filing metadata. Not every publisher, official or exchange.',
+  coverage:'Official macro news, bounded GDELT cross-publisher discovery, paginated public prediction markets and configured SEC CIK filing metadata. No exhaustive coverage of every publisher, official, or exchange.',
   warnings:Object.entries(errors).map(([source,error])=>source+': '+error),
   sections:[
    {title:'Official macro and financial news',entries:items.slice(0,40).map(x=>({title:x.title,source:x.source,url:x.url,publishedAt:x.published_at||x.publishedAt,summary:x.summary}))},
