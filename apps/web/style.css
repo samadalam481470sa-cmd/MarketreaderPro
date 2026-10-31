@@ -61,3 +61,21 @@ aside{display:flex;flex-direction:column}
 aside nav{min-height:0;flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#345970 transparent}
 aside .sidebar-status{margin-top:auto;flex:none}
 :focus-visible{outline:2px solid #93e9d8;outline-offset:3px}
+
+/* Portfolio rebalancing: data-derived charts, tables and clear risk disclosures. */
+.portfolio-rebalance-lab .eyebrow{display:block;color:#65d9c1;letter-spacing:1.4px;font-size:11px}
+.portfolio-rebalance-lab>form{margin:18px 0}
+.rebalance-check{display:flex;gap:12px;align-items:center;font-size:13px;color:#b8c6d9}
+.rebalance-check input{width:auto;margin:0;accent-color:#71e9c4}
+.rebalance-output{margin:18px 0;overflow-x:auto}
+.rebalance-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.rebalance-metric{border-radius:11px;background:#132a3d;border:1px solid #29465e;padding:17px}
+.rebalance-metric small{display:block;color:#91b4ca;font-size:11px}
+.rebalance-metric strong{display:block;margin-top:10px;font-size:20px;color:#eaf5ff}
+.rebalance-chart{display:block;width:100%;height:auto;margin:19px 0 9px;border:1px solid #27415b;border-radius:12px;background:#0b192a}
+.rebalance-output article{margin:15px 0}
+.rebalance-table{width:100%;font-size:12px;border-collapse:collapse}
+.rebalance-table th,.rebalance-table td{text-align:right;padding:12px 10px;border-bottom:1px solid #31485d}
+.rebalance-table th:first-child,.rebalance-table td:first-child{text-align:left}
+@media(max-width:850px){.rebalance-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:500px){.rebalance-metrics{grid-template-columns:1fr}}
