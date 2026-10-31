@@ -6,15 +6,16 @@
 
 ![Architecture](docs/images/architecture.svg)
 
-**Read-only financial market research platform for students and beginners.** Explore public prediction markets, official financial disclosure portals, concentration analytics and transparent educational research.
+**Read-only financial market research platform for students and beginners.** Now with optional PostgreSQL market history storage and transactionally applied SQL migrations. Explore public prediction markets, official financial disclosure portals, concentration analytics and transparent educational research.
 
 **Release status:** deployment-hardened *research prototype*. Not a regulated bank, brokerage, AI investment adviser, or production trading system. No bank login, deposits, personalized trading advice or real-money order placement.
 
 ## Run locally
 
-Requires Node.js 22+.
+Requires Node.js 22+. PostgreSQL is optional for the public dashboard and required for persistence.
 
 ```bash
+npm install
 npm start
 # http://localhost:3000
 npm run verify
@@ -26,6 +27,8 @@ Docker:
 docker build -t marketreaderpro .
 docker run --rm -p 3000:3000 marketreaderpro
 ```
+
+See **[Database installation and migrations](docs/DATABASE.md)** for persistence and Docker Compose instructions.
 
 Read **[Deployment and security checklist](docs/DEPLOYMENT.md)** before exposing a service publicly.
 
@@ -58,6 +61,9 @@ curl -X POST http://localhost:3000/api/risk -H 'content-type: application/json' 
 
 ## Still needed for actual financial-product production readiness
 
-Secure authentication and identity, authorized bank/broker data integrations, filings ingestion, retrieval-grounded AI, comprehensive observability, regulated trading partnerships, audited financial controls, data handling/privacy program, extensive security testing and real-world deployment verification. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+Secure authentication and identity, authorized bank/broker data integrations, actual government filing ingestion, retrieval-grounded AI, comprehensive observability, regulated trading partnerships, audited financial controls, data handling/privacy program, extensive security testing and real-world deployment verification. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 **Risk disclaimer:** Public congressional disclosures are typically delayed and do not establish unlawful insider trading. Market data can be unavailable or outdated. Do not use nonpublic information. No deposits or orders are supported.
+
+## Database attribution
+Database schemas and queries are original code. Integrates the permissively licensed [PostgreSQL](https://github.com/postgres/postgres) engine and the MIT-licensed [node-postgres driver](https://github.com/brianc/node-postgres); does not copy other repositories' user data.

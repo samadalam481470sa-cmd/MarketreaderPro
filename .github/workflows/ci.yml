@@ -7,12 +7,30 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: marketreader
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: marketreader
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U marketreader -d marketreader"
+          --health-interval 5s --health-timeout 5s --health-retries 8
+    env:
+      DATABASE_URL: postgres://marketreader:testpassword@localhost:5432/marketreader
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - run: npm install --no-audit --no-fund
       - run: npm run verify
+      - run: npm run db:migrate
+      - name: Check PostgreSQL schema
+        run: node scripts/verify-db.js
       - name: Docker build
         run: docker build -t marketreaderpro:ci .

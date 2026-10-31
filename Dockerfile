@@ -2,7 +2,10 @@ FROM node:22-alpine
 ENV NODE_ENV=production PORT=3000
 WORKDIR /app
 COPY --chown=node:node package.json ./
+RUN npm install --omit=dev --ignore-scripts --no-audit --no-fund
 COPY --chown=node:node apps ./apps
+COPY --chown=node:node db ./db
+COPY --chown=node:node scripts ./scripts
 COPY --chown=node:node docs/images/dashboard-preview.svg ./docs/images/dashboard-preview.svg
 USER node
 EXPOSE 3000

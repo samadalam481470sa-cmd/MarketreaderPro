@@ -5,6 +5,7 @@ import {dirname,resolve} from 'node:path';
 import {research,scorePortfolio} from './services.js';
 import {SECURITY_HEADERS,json,createLimiter,readJson,safeIp,requestId} from './security.js';
 import {loadMarkets,disclosureSources} from './markets.js';
+import {configured,getPool,readHistory,stats,closePool} from './database.js';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../web');
 const staticFiles=new Map([['/','index.html'],['/index.html','index.html'],['/app.js','app.js'],['/style.css','style.css'],['/dashboard-preview.svg','dashboard-preview.svg']]);
 const types={html:'text/html; charset=utf-8',js:'text/javascript; charset=utf-8',css:'text/css; charset=utf-8',svg:'image/svg+xml'};
@@ -20,6 +21,17 @@ if(!limited.allowed)return json(res,429,{error:'Rate limit exceeded',requestId:i
 if(path.startsWith('/api/')){
   if(path==='/api/health'&&req.method==='GET')return json(res,200,{ok:true,mode:'research-only',uptimeSeconds:Math.floor((Date.now()-started)/1000),timestamp:new Date().toISOString()});
   if(path==='/api/ready'&&req.method==='GET')return json(res,200,{ready:true,dependencies:'no mandatory remote dependencies',mode:'research-only'});
+  if(path==='/api/db/status'&&req.method==='GET'){
+    if(!configured())return json(res,503,{configured:false,error:'Database is not configured'});
+    try{return json(res,200,{configured:true,...await stats(await getPool())})}catch{return json(res,503,{configured:true,error:'Database unavailable'})}
+  }
+  if(path==='/api/history'&&req.method==='GET'){
+    if(!configured())return json(res,503,{error:'Database is not configured'});
+    const u=new URL(req.url,'http://localhost');
+    const limit=Number(u.searchParams.get('limit')||100);
+    try{return json(res,200,await readHistory(await getPool(),{source:u.searchParams.get('source'),externalId:u.searchParams.get('id'),limit}))}
+    catch(e){if(e.message.startsWith('Invalid')||e.message.startsWith('Limit'))return json(res,422,{error:e.message});return json(res,503,{error:'Database unavailable'})}
+  }
   if(path==='/api/markets'&&req.method==='GET')return json(res,200,await loadMarkets());
   if(path==='/api/disclosures'&&req.method==='GET')return json(res,200,{sources:disclosureSources,status:'source-links-only'});
   if(path==='/api/research'||path==='/api/risk'){
@@ -46,6 +58,6 @@ app.requestTimeout=10000;app.headersTimeout=15000;app.keepAliveTimeout=5000;
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
 if(!Number.isInteger(listenPort)||listenPort<1||listenPort>65535)throw Error('Invalid PORT');
 app.listen(listenPort,'0.0.0.0',()=>console.log(JSON.stringify({message:'marketreaderpro_started',port:listenPort,mode:'research-only'})));
-function shutdown(signal){console.log(JSON.stringify({message:'shutdown',signal}));app.close(()=>process.exit(0));setTimeout(()=>process.exit(1),9000).unref()}
+function shutdown(signal){console.log(JSON.stringify({message:'shutdown',signal}));app.close(async()=>{await closePool().catch(()=>{});process.exit(0)});setTimeout(()=>process.exit(1),9000).unref()}
 process.once('SIGINT',()=>shutdown('SIGINT'));process.once('SIGTERM',()=>shutdown('SIGTERM'));
 }
