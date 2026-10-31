@@ -62,7 +62,9 @@ export function runPortfolioRebalance(payload){
   // A rebalance signal is recorded at the finished close. Next observation
   // is the earliest possible fill in this close-only dataset.
   if(i>0 && i<bars-1 && i%options.rebalanceEvery===0){
-   if(currentDrift>options.driftThreshold+1e-12){
+   // Ignore residual numerical/share-rounding dust. A zero user threshold means
+   // rebalance for meaningful drift, not single-microshare differences.
+   if(currentDrift>Math.max(options.driftThreshold,1e-6)){
     triggers++;
     signalsPending=currentDrift;
    }else skippedForDrift++;

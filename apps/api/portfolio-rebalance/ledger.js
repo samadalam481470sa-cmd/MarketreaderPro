@@ -28,7 +28,8 @@ export function createLedger(portfolio,options){
  const fraction=options.fractionalShares;
  function roundShares(shares){
   if(!Number.isFinite(shares)||shares<=0)return 0;
-  return fraction?Math.floor((shares+EPS)*1e6)/1e6:Math.floor(shares+EPS);
+  // Always round DOWN; an epsilon added here could create a share that cash cannot fund.
+  return fraction?Math.floor(shares*1e6)/1e6:Math.floor(shares);
  }
  function mark(prices){
   const assetValues=prices.map((price,i)=>state.shares[i]*price);

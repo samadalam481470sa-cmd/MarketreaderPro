@@ -121,3 +121,21 @@ test('concentration and entropy are interpretable and finite',()=>{
  assert.ok(allocationDrift({allocations:[{actualWeight:.55,targetWeight:.6},
    {actualWeight:.42,targetWeight:.4}]})>.049);
 });
+
+test('fractional share quantities never spend more than available cash',()=>{
+ const opts=validateRebalanceOptions({initialCash:1200,feeBps:0,slippageBps:0,
+   maxAllocation:1,fixedFee:0,fractionalShares:true});
+ const p={assets:[{symbol:'AAA'},{symbol:'BBB'}],weights:[0.6,0.4]};
+ const ledger=createLedger(p,opts);
+ ledger.buyInitial([31.3748,70.0579]);
+ for(let i=0;i<40;i++)ledger.rebalance([31.37+i*.001,70.05+i*.002]);
+ const state=ledger.assertInvariants([31.41,70.13]);
+ assert.ok(state.cash>=0);
+ assert.ok(ledger.state.shares.every(q=>q>=0));
+});
+test('tiny share rounding dust never generates spurious zero-threshold rebalances',()=>{
+ const result=runPortfolioRebalance(input({returns:[0,0],options:{
+   feeBps:0,slippageBps:0,driftThreshold:0,rebalanceEvery:1
+ }}));
+ assert.equal(result.simulation.rebalanceSignals,0);
+});
