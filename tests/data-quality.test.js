@@ -22,3 +22,10 @@ test('briefing quality never hides outdated items',()=>{
  const b=inspectBriefing({generatedAt:'2026-10-20T00:00:00Z',sections:[{title:'News',entries:[{title:'Headline',publishedAt:'2026-10-20T00:00:00Z'}]}],warnings:[]},{now});
  assert.equal(b.quality.status,'stale');assert.equal(b.sections[0].entries[0].freshness,'stale');
 });
+
+test('financial relevance ranks newer official macro news ahead of unrelated discovery',async()=>{
+ const {rankNews}=await import('../apps/api/data-quality.js');
+ const items=[{source:'gdelt-global',title:'Celebrity event',summary:'',publishedAt:'2026-10-30T10:00:00Z'},
+ {source:'federal-reserve',title:'Interest rates release',summary:'Policy',publishedAt:'2026-10-30T09:00:00Z'}];
+ const ranked=rankNews(items,{now});assert.equal(ranked[0].source,'federal-reserve');assert.equal(ranked[0].financiallyRelevant,true);
+});

@@ -40,3 +40,17 @@ export function inspectBriefing(brief,{now=Date.now()}={}){
  }));
  return {...brief,sections,quality:{status:generated.status,generatedAgeSeconds:generated.ageSeconds,hasSourceWarnings:Boolean(brief?.warnings?.length),policy:'Displayed dates are source/filing timestamps; never claim real-time official reporting.'}};
 }
+
+// Transparent, deterministic relevance ordering; never use promotional language as a trading signal.
+const FINANCE_TERMS=/\b(stock|stocks|shares|market|markets|equity|equities|inflation|interest|rates|federal reserve|earnings|employment|jobs|treasury|bond|bonds|crypto|bitcoin|currency|commodit(?:y|ies)|gold|oil|financial|trade|trading|gdp|cpi|fed|sec|filing)\b/i;
+export function rankNews(items,{now=Date.now()}={}){
+ return [...items].map(item=>{
+  const timestamp=Date.parse(item.publishedAt);
+  const hours=Number.isFinite(timestamp)?Math.max(0,(now-timestamp)/3600000):10000;
+  const official=item.source==='federal-reserve'||item.source==='bls';
+  const relevance=FINANCE_TERMS.test(item.title+' '+(item.summary||''));
+  // Primary public agencies receive priority; recent relevant news over old/noisy headlines.
+  const score=(official?25:0)+(relevance?15:0)+Math.max(0,12-hours/4);
+  return {...item,relevanceScore:Math.round(score*100)/100,financiallyRelevant:relevance||official};
+ }).sort((a,b)=>b.relevanceScore-a.relevanceScore||Date.parse(b.publishedAt)-Date.parse(a.publishedAt));
+}
