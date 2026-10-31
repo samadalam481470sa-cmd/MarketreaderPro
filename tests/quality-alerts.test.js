@@ -1,31 +1,30 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {planSourceIncidents,listSourceIncidents} from '../apps/api/quality-alerts.js';
-test('unhealthy source produces an incident with measurable reasons',()=>{
+test('critical source opens incident and only healthy sources are resolved',()=>{
  const report={sources:[
   {name:'official-bls',state:'healthy'},
   {name:'market-kalshi',state:'critical',reasons:['unavailable_last_attempt'],
-   lastAttemptAt:'2026-10-31',lastSuccessAt:null,consecutiveNonSuccesses:3}
+   lastAttemptAt:'2026-10-31T00:00:00Z',consecutiveNonSuccesses:3}
  ],counts:{healthy:1,critical:1}};
- const plan=planSourceIncidents(report);
- assert.equal(plan.counts.unhealthy,1);
- assert.deepEqual(plan.resolve,['official-bls']);
- assert.equal(plan.openOrUpdate[0].sourceName,'market-kalshi');
+ const planned=planSourceIncidents(report);
+ assert.deepEqual(planned.resolve,['official-bls']);
+ assert.equal(planned.openOrUpdate[0].sourceName,'market-kalshi');
+ assert.equal(planned.counts.unhealthy,1);
 });
-test('missing a source from the report never implies recovery',()=>{
+test('sources missing from an ingestion do not count as recovered',()=>{
  const plan=planSourceIncidents({sources:[],counts:{}});
- assert.equal(plan.resolve.length,0);
- assert.equal(plan.openOrUpdate.length,0);
+ assert.deepEqual(plan.resolve,[]);
+ assert.deepEqual(plan.openOrUpdate,[]);
 });
-test('incident history query is parameterized and respects optional resolved filter',async()=>{
- const calls=[];
- const db={query:async(sql,args)=>{
-  calls.push({sql,args});
-  return {rows:[{id:1,state:'critical',resolved_at:null}]};
- }};
- const r=await listSourceIncidents(db,{limit:20,includeResolved:true});
- assert.equal(r.open,1);
- assert.deepEqual(calls[0].args,[20,true]);
- assert.match(calls[0].sql,/resolved_at IS NULL/);
- assert.rejects(()=>listSourceIncidents(db,{limit:101}),/Incident limit/);
+test('incident history query limits results using bound SQL parameters',async()=>{
+ const queries=[];
+ const db={query:async(sql,args)=>{queries.push({sql,args});return {rows:[
+  {id:1,source_name:'market-kalshi',resolved_at:null}
+ ]}}};
+ const result=await listSourceIncidents(db,{limit:10,includeResolved:true});
+ assert.equal(result.open,1);
+ assert.deepEqual(queries[0].args,[10,true]);
+ assert.match(queries[0].sql,/resolved_at IS NULL/);
+ await assert.rejects(()=>listSourceIncidents(db,{limit:101}),/Incident limit/);
 });

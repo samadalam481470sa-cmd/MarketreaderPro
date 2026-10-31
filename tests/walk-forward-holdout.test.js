@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {evaluateHoldout,stabilityDiagnostics} from '../apps/api/walk-forward/holdout.js';
 import {costSensitivity} from '../apps/api/walk-forward/cost-stress.js';
 import {runWalkForward} from '../apps/api/walk-forward/engine.js';
+import {validatePortfolio} from '../apps/api/portfolio-risk/validation.js';
 const methods=['equal-weight','inverse-volatility','momentum-tilt'];
 const fake=(index,returns)=>({
  fold:index,trainEnd:'2025-01-01',firstTestObservation:'2025-02-01',testEnd:'2025-03-01',
@@ -42,9 +43,7 @@ test('real held-out data are re-evaluated at increasing simulated costs',()=>{
  execution:{feeBps:10,slippageBps:5}};
  const result=runWalkForward(input);
  assert.equal(result.holdout.status,'evaluated');
- const sensitivity=costSensitivity({
-  assets:input.assets,dates,periodsPerYear:252
- },result.folds,result.methods,{feeBps:10,slippageBps:5,initialCash:10000,
+ const sensitivity=costSensitivity(validatePortfolio(input),result.folds,result.methods,{feeBps:10,slippageBps:5,initialCash:10000,
   rebalanceEvery:21,driftThreshold:.03,fractionalShares:true,fixedFee:0,chartPoints:120,keepTrades:100});
  assert.equal(sensitivity.scenarios.length,3);
  const zero=sensitivity.scenarios[0].methods['equal-weight'].averageOutOfSampleReturn;
