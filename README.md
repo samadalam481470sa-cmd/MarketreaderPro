@@ -34,7 +34,7 @@ Read **[Deployment and security checklist](docs/DEPLOYMENT.md)** before exposing
 
 ## Included
 
-- Responsive web dashboard with original SVG illustration.
+- Responsive web dashboard with original SVG illustration and a historical market database explorer.
 - Public Kalshi/Polymarket best-effort connectors, individual upstream failure handling, request timeouts, response-field allowlists and a 30-second cache.
 - Official SEC / US House / US Senate disclosure source links (not scraping/analysis).
 - Explainable, rule-based *educational* research responses; no connected language model.
