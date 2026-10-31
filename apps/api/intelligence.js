@@ -2,6 +2,7 @@ import {createHash} from 'node:crypto';
 import {loadMarkets} from './markets.js';
 import {fetchSecFilings} from './sec.js';
 import {saveMarkets} from './database.js';
+import {enrichBriefing} from './briefing-ai.js';
 
 export const PUBLIC_FEEDS=Object.freeze([
  {id:'federal-reserve',url:'https://www.federalreserve.gov/feeds/press_all.xml',hosts:['www.federalreserve.gov','federalreserve.gov']},
@@ -93,7 +94,7 @@ export async function ingestIntelligence(db,{fetcher=fetch,marketLoader=loadMark
    }catch(e){errors['sec-'+cik]=e.name}
   }
   const day=localDate(now);
-  const briefing=buildBriefing({day,items:allItems,markets,filings,errors});
+  const briefing=await enrichBriefing(buildBriefing({day,items:allItems,markets,filings,errors}));
   await db.query(`INSERT INTO daily_briefings(briefing_date,timezone,title,body)
    VALUES($1,'America/Chicago',$2,$3) ON CONFLICT(briefing_date) DO UPDATE SET title=EXCLUDED.title,body=EXCLUDED.body,generated_at=now()`,
    [day,briefing.title,JSON.stringify(briefing)]);

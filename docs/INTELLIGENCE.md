@@ -50,3 +50,9 @@ docker compose --profile intelligence up -d intelligence-worker
 ```
 
 The worker targets 7:00 AM in America/Chicago including daylight saving, attempts one briefing per local calendar day, and uses a Postgres advisory lock to prevent duplicate concurrent runs. It can continue working while a user's computer is off **only if deployed on an always-on server**. No cloud host has been provisioned by this repository. A dashboard visit alone does not start the scheduler. Use `docker compose logs intelligence-worker` for diagnostic output.
+
+## Optional AI contextual summary
+
+In the server's secrets manager set `AI_BRIEFING_ENABLED=true`, `AI_API_KEY` and `AI_MODEL`. Re-run `npm run intelligence:once` or wait for a scheduled next-day briefing. The worker sends at most fifteen **public** source titles, timestamps and URLs to the configured AI provider. The AI commentary is labeled and is never treated as a verified price, a trade recommendation, or a replacement for the original linked sources. If the provider fails, the factual digest still saves successfully. AI costs and provider terms apply.
+
+The Docker worker must be provisioned with these environment variables separately; merely setting variables on the host shell does not automatically expose them inside the worker container.
