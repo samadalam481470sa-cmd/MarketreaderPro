@@ -45,6 +45,10 @@ Open **http://localhost:3000**. The startup scripts migrate PostgreSQL, attempt 
 
 A lighter read-only run is possible with `npm install && npm start`, but historical/briefing features require a configured database. This is a downloadable application source package, **not a signed native desktop installer**.
 
+## Multi-asset risk workstation
+
+The **Portfolio Risk Lab** accepts an aligned multi-asset closing-price CSV with 2–12 symbols and user-supplied or equal target weights. It calculates covariance/correlation, risk contributions, historical VaR/expected shortfall, drawdown, and explicitly hypothetical shocks—without treating the data as verified live quotes. [Read the methodology](docs/PORTFOLIO_RISK.md).
+
 ## Historical strategy backtesting
 
 The **Strategy Backtesting** dashboard now accepts your own historical OHLCV CSV, simulates next-open long-only orders under fees and slippage, charts equity against buy-and-hold, and reports drawdown plus optional historical bootstrap risk scenarios. [Read the methodology and assumptions](docs/BACKTEST.md). This does not trade live markets or authenticate the uploaded prices.
