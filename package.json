@@ -7,7 +7,7 @@
     "start": "node apps/api/server.js",
     "dev": "node --watch apps/api/server.js",
     "test": "node --test tests/*.test.js",
-    "check": "node --check apps/api/server.js && node --check apps/api/security.js && node --check apps/api/markets.js && node --check apps/api/database.js && node --check apps/web/app.js && node --check scripts/migrate.js && node --check scripts/ingest.js && node --check apps/api/accounts.js && node --check apps/api/ai.js && node --check apps/api/sec.js && node --check scripts/ingest-sec.js && node --check apps/api/banking.js && node --check apps/api/intelligence.js && node --check scripts/intelligence.js && node --check scripts/briefing-status.js && node --check scripts/scheduler.js && node --check apps/api/briefing-ai.js && node --check apps/api/broad-news.js && node --check apps/api/market-universe.js && node --check apps/api/coverage.js && node --check apps/api/sec-transactions.js && node --check scripts/ingest-form4.js && node --check scripts/import-house-index.js && node --check apps/api/data-quality.js && node --check apps/api/indicators.js && node --check scripts/package-check.js",
+    "check": "node --check apps/api/server.js && node --check apps/api/security.js && node --check apps/api/markets.js && node --check apps/api/database.js && node --check apps/web/app.js && node --check scripts/migrate.js && node --check scripts/ingest.js && node --check apps/api/accounts.js && node --check apps/api/ai.js && node --check apps/api/sec.js && node --check scripts/ingest-sec.js && node --check apps/api/banking.js && node --check apps/api/intelligence.js && node --check scripts/intelligence.js && node --check scripts/briefing-status.js && node --check scripts/scheduler.js && node --check apps/api/briefing-ai.js && node --check apps/api/broad-news.js && node --check apps/api/market-universe.js && node --check apps/api/coverage.js && node --check apps/api/sec-transactions.js && node --check scripts/ingest-form4.js && node --check scripts/import-house-index.js && node --check apps/api/data-quality.js && node --check apps/api/indicators.js && node --check scripts/package-check.js && node --check scripts/code-audit.js",
     "verify": "npm run check && npm test",
     "db:migrate": "node scripts/migrate.js",
     "db:ingest": "node scripts/ingest.js",
@@ -19,7 +19,8 @@
     "intelligence:scheduled": "node scripts/scheduler.js",
     "sec:transactions": "node scripts/ingest-form4.js",
     "house:import": "node scripts/import-house-index.js",
-    "package:check": "node scripts/package-check.js"
+    "package:check": "node scripts/package-check.js",
+    "code:audit": "node scripts/code-audit.js"
   },
   "dependencies": {
     "pg": "^8.23.1",

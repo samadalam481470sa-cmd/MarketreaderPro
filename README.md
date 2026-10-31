@@ -91,6 +91,10 @@ The ZIP includes the server, frontend, GPU companion, migrations, scripts, Docke
 
 Read the [database guide](docs/DATABASE.md), [intelligence sources](docs/INTELLIGENCE.md), [government disclosure constraints](docs/GOVERNMENT_DISCLOSURES.md), and [GPU companion](docs/LOCAL_GPU_AGENT.md).
 
+## Code-size audit
+
+Run `npm run code:audit` to view source lines by component, excluding vendored third-party packages, generated assets and documentation. The CI workflow attaches the same audit as a JSON artifact. This makes progress toward the requested 50,000-line milestone measurable without artificial padding. [Methodology](docs/CODEBASE_SIZE.md).
+
 ## Verify locally
 
 ```bash
