@@ -10,6 +10,19 @@
 
 **Release status:** deployment-hardened *research prototype*. Not a regulated bank, brokerage, AI investment adviser, or production trading system. No bank login, deposits, personalized trading advice or real-money order placement.
 
+## Local GPU research companion (v0.6)
+
+A separate opt-in Python agent fetches public market snapshots, saves history to local SQLite, and calculates descriptive momentum/volatility signals. It uses optional CUDA/Apple Metal through PyTorch, with CPU fallback. It runs while the OS is awake (including display off if allowed), **not in actual system sleep**.
+
+```bash
+python3 -m unittest discover -s tests_py -v
+MRP_GPU=cpu python3 -m agent once
+MRP_GPU=auto python3 -m agent run
+python3 -m agent status
+```
+
+See [GPU agent installation, power behavior and privacy controls](docs/LOCAL_GPU_AGENT.md). Research is non-trading and opt-in.
+
 ## Run locally
 
 Requires Node.js 22+. PostgreSQL is optional for the public dashboard and required for persistence.
