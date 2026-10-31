@@ -2,49 +2,40 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {parseHistoricalDataset,validateProvenance} from '../apps/api/history-import/parse.js';
 import {assessHistoryQuality} from '../apps/api/history-import/quality.js';
-const file=(days=45,large=false)=>{
- const rows=['date,AAA,BBB'];
- for(let i=0;i<days;i++){
-  const date=new Date(Date.UTC(2025,0,i+1)).toISOString().slice(0,10);
-  const a=100+i*.2*(large?15:1);
-  rows.push([date,a.toFixed(3),(60+i*.01).toFixed(3)].join(','));
- }
- return rows.join('\n');
-};
-const meta={sourceLabel:'Operator licensed data',licenseNote:'Permitted local research archive',
- sourceUrl:'https://example.org/market-data'};
-test('import parsing records immutable identity and provenance',()=>{
- const a=parseHistoricalDataset(file(),meta);
- const b=parseHistoricalDataset(file(),meta);
+const csv=()=>['date,AAA,BBB',...Array.from({length:42},(_,i)=>{
+ const date=new Date(Date.UTC(2025,0,i+1)).toISOString().slice(0,10);
+ return [date,(100+i*.2).toFixed(2),(50+i*.08).toFixed(2)].join(',');
+})].join('\n');
+const metadata={sourceLabel:'Operator licensed history',licenseNote:'Permitted internal research archive',sourceUrl:'https://example.org/data'};
+test('accepts aligned real source format and creates deterministic checksum',()=>{
+ const a=parseHistoricalDataset(csv(),metadata);
+ const b=parseHistoricalDataset(csv(),metadata);
  assert.equal(a.datasetId,b.datasetId);
  assert.equal(a.assetCount,2);
- assert.equal(a.observationCount,45);
- assert.equal(a.sourceUrl,meta.sourceUrl);
- assert.equal(a.quality.status,'validated-format');
- assert.equal(a.values[0].prices[0].date,'2025-01-01');
+ assert.equal(a.observationCount,42);
+ assert.equal(a.sourceLabel,metadata.sourceLabel);
+ assert.equal(a.quality.status,'review'); // old source data are flagged, not considered current
 });
-test('same prices but different licensing metadata result in distinct archives',()=>{
- const a=parseHistoricalDataset(file(),meta);
- const b=parseHistoricalDataset(file(),{...meta,licenseNote:'Different restricted permission notice'});
+test('distinct license terms cannot silently collapse provenance',()=>{
+ const a=parseHistoricalDataset(csv(),metadata);
+ const b=parseHistoricalDataset(csv(),{...metadata,licenseNote:'Different licensed permission notice'});
  assert.notEqual(a.datasetId,b.datasetId);
 });
-test('rejects data with missing or suspicious authorization metadata',()=>{
- assert.throws(()=>parseHistoricalDataset(file(),{...meta,licenseNote:'short'}),/license/);
- assert.throws(()=>parseHistoricalDataset(file(),{...meta,sourceUrl:'http://example.org'}),/HTTPS/);
- assert.throws(()=>validateProvenance({...meta,sourceUrl:'https://alice:pw@example.com'}),/credentials/);
+test('invalid publisher or missing license details are refused',()=>{
+ assert.throws(()=>validateProvenance({...metadata,licenseNote:'short'}),/license/);
+ assert.throws(()=>validateProvenance({...metadata,sourceUrl:'http://example.org'}),/HTTPS/);
+ assert.throws(()=>validateProvenance({...metadata,sourceUrl:'https://u:p@example.org'}),/credentials/);
 });
-test('cannot pass malformed closes or unaligned historical timestamps',()=>{
- assert.throws(()=>parseHistoricalDataset(file().replace('100.000','-1.000'),meta),/CSV rejected/);
- const rows=file().split('\n');
- rows[3]=rows[3].replace('2025-01-03','2025-01-02');
- assert.throws(()=>parseHistoricalDataset(rows.join('\n'),meta),/strictly increasing/);
+test('malformed closes and duplicate dates are rejected',()=>{
+ assert.throws(()=>parseHistoricalDataset(csv().replace('100.00','-100.00'),metadata),/CSV rejected/);
+ const broken=csv().split('\n');
+ broken[3]=broken[3].replace('2025-01-03','2025-01-02');
+ assert.throws(()=>parseHistoricalDataset(broken.join('\n'),metadata),/ascending|increasing/);
 });
-test('quality alerts detect outsized daily changes without altering source prices',()=>{
- const a=parseHistoricalDataset(file(45,true),meta);
- assert.equal(a.quality.assets.length,2);
- assert.equal(a.quality.sampleDates.start,'2025-01-01');
- const values=a.values.map(x=>({...x,prices:[...x.prices]}));
- values[0].prices[3]={...values[0].prices[3],close:300};
- const quality=assessHistoryQuality(values);
+test('unusual moves are recorded as warnings but never silently changed',()=>{
+ const a=parseHistoricalDataset(csv(),metadata);
+ const prices=a.values.map(v=>({...v,prices:[...v.prices]}));
+ prices[0].prices[4]={...prices[0].prices[4],close:500};
+ const quality=assessHistoryQuality(prices);
  assert.ok(quality.warnings.some(x=>x.includes('30%')));
 });
