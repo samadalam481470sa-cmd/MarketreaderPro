@@ -30,6 +30,13 @@ See [GPU agent installation, power behavior and privacy controls](docs/LOCAL_GPU
 
 [Windows/macOS/Linux quick start](docs/QUICKSTART.md) — requires Docker. The scripts start PostgreSQL, the web app, the first intelligence refresh and an opt-in morning scheduler. This is source code, **not a signed desktop installer**.
 
+## Government disclosure processing (v1.1)
+
+- SEC Form 4 XML **transaction-level** extraction with dates, codes, share amounts, prices and attribution for configured CIKs.
+- Opt-in **offline House annual index** import (filing metadata; no automatic PDF transaction parsing) subject to statutory use restrictions.
+- New indexed disclosure APIs. Senate remains official-portal-only because access/usage rights are not cleared.
+- [Government disclosure documentation](docs/GOVERNMENT_DISCLOSURES.md).
+
 ## Expanded news and market discovery (v1.0)
 
 The intelligence worker now discovers cross-publisher financial headlines through GDELT, paginates public prediction markets, accepts up to 50 configured SEC CIKs, and reports actual source coverage at `GET /api/coverage`. This is broad discovery but **not every market, news publisher, or politician**, and it does not misrepresent government filing metadata as real-time trades. See [coverage documentation](docs/INTELLIGENCE.md).

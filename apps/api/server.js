@@ -12,6 +12,7 @@ import {fetchSecFilings} from './sec.js';
 import {createLinkToken,exchangeBankToken,listBankAccounts,unlinkBank} from './banking.js';
 import {latestIntelligence} from './intelligence.js';
 import {COVERAGE_TARGETS} from './coverage.js';
+import {getForm4Transactions} from './sec-transactions.js';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../web');
 const staticFiles=new Map([['/','index.html'],['/index.html','index.html'],['/app.js','app.js'],['/style.css','style.css'],['/dashboard-preview.svg','dashboard-preview.svg']]);
 const types={html:'text/html; charset=utf-8',js:'text/javascript; charset=utf-8',css:'text/css; charset=utf-8',svg:'image/svg+xml'};
@@ -29,6 +30,18 @@ if(path.startsWith('/api/')){
   if(path==='/api/health'&&req.method==='GET')return json(res,200,{ok:true,mode:'research-only',uptimeSeconds:Math.floor((Date.now()-started)/1000),timestamp:new Date().toISOString()});
   if(path==='/api/ready'&&req.method==='GET')return json(res,200,{ready:true,dependencies:'no mandatory remote dependencies',mode:'research-only'});
   if(path==='/api/capabilities'&&req.method==='GET')return json(res,200,{mode:'public-research',experimental:experimentalEnabled(),liveTrading:false,liveBankTransfers:false,localGpuInBrowser:false});
+  if(path==='/api/government/filings'&&req.method==='GET'){
+    if(!configured())return json(res,503,{error:'Database required'});
+    const u=new URL(req.url,'http://localhost'),source=u.searchParams.get('source')||'house';
+    if(source!=='house')return json(res,422,{error:'Only House filing indexes available'});
+    try{const r=await (await getPool()).query('SELECT source,source_id,filer_name,document_type,filed_date,document_url,source_year FROM official_filing_index WHERE source=$1 ORDER BY filed_date DESC NULLS LAST,id DESC LIMIT 100',[source]);return json(res,200,{source,rows:r.rows,transactionLevel:false,notice:'Index records only. PDFs not verified for transaction detail.'})}catch{return json(res,503,{error:'Disclosure index unavailable'})}
+  }
+  if(path==='/api/government/sec-transactions'&&req.method==='GET'){
+    if(!configured())return json(res,503,{error:'Database required'});
+    const u=new URL(req.url,'http://localhost');
+    const limit=Number(u.searchParams.get('limit')||50),ticker=u.searchParams.get('ticker');
+    try{return json(res,200,await getForm4Transactions(await getPool(),{limit,ticker}))}catch(e){return json(res,e.message.startsWith('Invalid')||e.message.startsWith('Limit')?422:503,{error:'SEC transaction query unavailable'})}
+  }
   if(path==='/api/coverage'&&req.method==='GET'){
     if(!configured())return json(res,200,{configured:false,targets:COVERAGE_TARGETS,sources:[]});
     try{const r=await (await getPool()).query('SELECT source_name,last_attempt_at,last_success_at,last_status,item_count FROM source_coverage ORDER BY source_name');return json(res,200,{configured:true,targets:COVERAGE_TARGETS,sources:r.rows})}catch{return json(res,503,{error:'Coverage unavailable'})}
