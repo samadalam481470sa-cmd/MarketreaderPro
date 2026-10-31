@@ -16,6 +16,8 @@ export function parseTimestamp(raw) {
   if (typeof raw !== 'string' && typeof raw !== 'number') fail('Bar time must be ISO 8601 or Unix milliseconds');
   const t = typeof raw === 'number' ? raw : Date.parse(DATE_ONLY.test(raw) ? raw + 'T00:00:00Z' : raw);
   if (!Number.isFinite(t) || Math.abs(t) > 8.64e15) fail('Invalid bar timestamp');
+  if (typeof raw === 'string' && DATE_ONLY.test(raw) &&
+      new Date(t).toISOString().slice(0,10) !== raw) fail('Invalid calendar date');
   return t;
 }
 export function validateBars(raw, { minimum = 35, maximum = 700 } = {}) {

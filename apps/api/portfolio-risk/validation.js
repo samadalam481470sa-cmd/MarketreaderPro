@@ -15,6 +15,8 @@ function timestamp(value) {
   const normalized=/^\d{4}-\d{2}-\d{2}$/.test(value)?value+'T00:00:00Z':value;
   const parsed=Date.parse(normalized);
   if(!Number.isFinite(parsed))invalid('Invalid asset date');
+  if(/^\d{4}-\d{2}-\d{2}$/.test(value)&&new Date(parsed).toISOString().slice(0,10)!==value)
+    invalid('Invalid calendar date');
   return parsed;
 }
 export function validatePortfolio(payload) {

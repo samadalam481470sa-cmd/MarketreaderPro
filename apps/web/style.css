@@ -55,3 +55,9 @@ main{max-width:1700px;padding:36px 37px}
 .correlation-table th:first-child{text-align:left}
 .portfolio-risk-result{overflow-x:auto}
 @media(max-width:750px){.portfolio-lab-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Keep expanding research navigation accessible on shorter laptop displays. */
+aside{display:flex;flex-direction:column}
+aside nav{min-height:0;flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#345970 transparent}
+aside .sidebar-status{margin-top:auto;flex:none}
+:focus-visible{outline:2px solid #93e9d8;outline-offset:3px}
