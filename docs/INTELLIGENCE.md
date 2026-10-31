@@ -65,3 +65,7 @@ The Docker worker must be provisioned with these environment variables separatel
 - `GET /api/coverage` shows connector outcomes and last successful collection. Source failures remain visible.
 
 Official House and Senate portals remain links; automated transaction-by-transaction Congress ingestion and complete global financial-market quotes require separately verified feeds, commercial permissions where applicable, and additional code. Senate disclosure data has restrictions on some commercial uses.
+
+## Source accuracy and freshness
+
+The ingestion pipeline validates HTTPS source URLs, source timestamps, sane market quote ranges and duplicates. The web app displays when the briefing was generated, when news was published and when public market feeds were retrieved. These timestamps are different: retrieving a price does not prove when the exchange first published it. Stale records remain marked instead of being presented as current. Invalid source data is rejected and counted as a quality warning. LLM commentary is clearly separate from verified source records and may be wrong; users should inspect the linked primary filings and market terms before taking any action.

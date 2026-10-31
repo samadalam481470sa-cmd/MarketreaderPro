@@ -13,6 +13,7 @@ import {createLinkToken,exchangeBankToken,listBankAccounts,unlinkBank} from './b
 import {latestIntelligence} from './intelligence.js';
 import {COVERAGE_TARGETS} from './coverage.js';
 import {getForm4Transactions} from './sec-transactions.js';
+import {timestampQuality} from './data-quality.js';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../web');
 const staticFiles=new Map([['/','index.html'],['/index.html','index.html'],['/app.js','app.js'],['/style.css','style.css'],['/dashboard-preview.svg','dashboard-preview.svg']]);
 const types={html:'text/html; charset=utf-8',js:'text/javascript; charset=utf-8',css:'text/css; charset=utf-8',svg:'image/svg+xml'};
@@ -102,7 +103,10 @@ if(path.startsWith('/api/')){
       return json(res,200,await unlinkBank(db,user.id,body?.connectionId));
     }catch(e){return json(res,e.status||503,{error:e.status?e.message:'Bank integration unavailable'})}
   }
-  if(path==='/api/markets'&&req.method==='GET')return json(res,200,await loadMarkets());
+  if(path==='/api/markets'&&req.method==='GET'){
+    const snapshot=await loadMarkets();
+    return json(res,200,{...snapshot,freshness:timestampQuality(snapshot.asOf,{maxAgeMs:15*60000}),notice:'Timestamp is time the upstream data was retrieved, not proof of exchange publication or quote execution availability.'});
+  }
   if(path==='/api/disclosures'&&req.method==='GET')return json(res,200,{sources:disclosureSources,status:'source-links-only'});
   if(path==='/api/research'||path==='/api/risk'){
     if(req.method!=='POST')return json(res,405,{error:'Method not allowed'},{'Allow':'POST'});

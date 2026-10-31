@@ -13,7 +13,7 @@ export async function discoverMarketUniverse({fetcher=fetch,pages=3,pageSize=100
    const text=await r.text();if(text.length>2000000)throw Error('Body too large');
    const j=JSON.parse(text);
    if(!Array.isArray(j.markets))throw Error('Schema mismatch');
-   for(const market of j.markets)if(typeof market.ticker==='string'&&typeof market.title==='string')rows.kalshi.push({id:market.ticker.slice(0,128),title:market.title.slice(0,500),yesPrice:Number.isInteger(market.yes_ask)?market.yes_ask:null});
+   for(const market of j.markets)if(typeof market.ticker==='string'&&typeof market.title==='string')rows.kalshi.push({id:market.ticker.slice(0,128),title:market.title.slice(0,500),yesPrice:Number.isInteger(market.yes_ask)&&market.yes_ask>=0&&market.yes_ask<=100?market.yes_ask:null});
    if(!j.cursor||j.cursor===cursor)break;cursor=j.cursor;
   }catch(e){errors.kalshi=e.name;break}
  }

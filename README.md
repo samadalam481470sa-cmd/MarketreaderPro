@@ -30,6 +30,10 @@ See [GPU agent installation, power behavior and privacy controls](docs/LOCAL_GPU
 
 [Windows/macOS/Linux quick start](docs/QUICKSTART.md) — requires Docker. The scripts start PostgreSQL, the web app, the first intelligence refresh and an opt-in morning scheduler. This is source code, **not a signed desktop installer**.
 
+## Data-quality safeguards (v1.1.1)
+
+Source-aware timestamp checks, invalid quote rejection, source-linked briefings, and visible stale-data/partial-coverage warnings. Downloaded data is not presumed complete or real-time. These checks reduce mistakes but do not independently verify the truth of every external headline or disclosure.
+
 ## Government disclosure processing (v1.1)
 
 - SEC Form 4 XML **transaction-level** extraction with dates, codes, share amounts, prices and attribution for configured CIKs.

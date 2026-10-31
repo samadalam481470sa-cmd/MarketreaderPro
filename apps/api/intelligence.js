@@ -6,6 +6,7 @@ import {enrichBriefing} from './briefing-ai.js';
 import {discoverNews} from './broad-news.js';
 import {discoverMarketUniverse} from './market-universe.js';
 import {coverageSummary} from './coverage.js';
+import {validateNewsRecord,validateMarketRecord,inspectBriefing} from './data-quality.js';
 
 export const PUBLIC_FEEDS=Object.freeze([
  {id:'federal-reserve',url:'https://www.federalreserve.gov/feeds/press_all.xml',hosts:['www.federalreserve.gov','federalreserve.gov']},
@@ -82,14 +83,20 @@ export async function ingestIntelligence(db,{fetcher=fetch,marketLoader=discover
   }
   const newsStatus={};
   try{const discovered=await newsLoader({fetcher});allItems.push(...discovered.rows);Object.assign(errors,discovered.errors);Object.assign(newsStatus,discovered.status)}catch(e){errors.gdelt=e.name}
-  saved=await insertItems(db,allItems);
+  const validItems=allItems.map(x=>validateNewsRecord(x,{now:now.getTime()})).filter(Boolean);
+  const rejectedNews=allItems.length-validItems.length;
+  if(rejectedNews)errors['news-quality']='Rejected '+rejectedNews+' invalid or untrusted records';
+  saved=await insertItems(db,validItems);
   let markets=[];const marketTotals={kalshi:0,polymarket:0};
   try{
    const snapshot=await marketLoader({fetcher});
    Object.assign(errors,snapshot.errors||{});
    for(const source of ['kalshi','polymarket']){
     if((snapshot.availability?.[source]==='fulfilled'||snapshot.status?.[source]?.status==='ok'||snapshot.status?.[source]?.status==='partial')&&Array.isArray(snapshot.rows?.[source]||snapshot[source])){
-     const rowset=snapshot.rows?.[source]||snapshot[source];marketTotals[source]=rowset.length;
+     const rawRows=snapshot.rows?.[source]||snapshot[source];
+     const rowset=rawRows.map(row=>validateMarketRecord(row,source)).filter(Boolean);
+     if(rowset.length!==rawRows.length)errors['market-quality-'+source]='Rejected '+(rawRows.length-rowset.length)+' malformed market quotes';
+     marketTotals[source]=rowset.length;
      try{for(let offset=0;offset<rowset.length;offset+=100)await saveMarkets(db,source,rowset.slice(offset,offset+100),new Date(snapshot.asOf||now));marketCount+=rowset.length}
      catch(e){errors['market-db-'+source]=e.name}
      markets.push(...rowset.slice(0,6).map(x=>({...x,source})));
@@ -106,11 +113,11 @@ export async function ingestIntelligence(db,{fetcher=fetch,marketLoader=discover
   const cover=coverageSummary({newsStatus:{...officialStatus,...newsStatus},markets:{kalshi:{status:errors.kalshi?'partial':'ok',items:marketTotals.kalshi},polymarket:{status:errors.polymarket?'partial':'ok',items:marketTotals.polymarket}},sec:secStatus,errors});
   for(const entry of cover.sources){await db.query(`INSERT INTO source_coverage(source_name,last_status,item_count,last_success_at) VALUES($1,$2,$3,CASE WHEN $2='ok' THEN now() ELSE NULL END) ON CONFLICT(source_name) DO UPDATE SET last_attempt_at=now(),last_status=EXCLUDED.last_status,item_count=EXCLUDED.item_count,last_success_at=CASE WHEN EXCLUDED.last_status='ok' THEN now() ELSE source_coverage.last_success_at END`,[entry.name,entry.status,entry.items||0])}
   const day=localDate(now);
-  const briefing=await enrichBriefing({...buildBriefing({day,items:allItems,markets,filings,errors}),coverageReport:cover});
+  const briefing=await enrichBriefing({...buildBriefing({day,items:validItems,markets,filings,errors}),coverageReport:cover});
   await db.query(`INSERT INTO daily_briefings(briefing_date,timezone,title,body)
    VALUES($1,'America/Chicago',$2,$3) ON CONFLICT(briefing_date) DO UPDATE SET title=EXCLUDED.title,body=EXCLUDED.body,generated_at=now()`,
    [day,briefing.title,JSON.stringify(briefing)]);
-  const result={day,newsItems:allItems.length,newItems:saved,markets:marketCount,filings:filings.length,coverage:cover,errors};
+  const result={day,newsItems:validItems.length,newItems:saved,markets:marketCount,filings:filings.length,coverage:cover,errors};
   await db.query("UPDATE intelligence_runs SET completed_at=now(),status=$2,results=$3 WHERE id=$1",[run.rows[0].id,Object.keys(errors).length?'partial':'ok',JSON.stringify(result)]);
   return result;
  }catch(e){
