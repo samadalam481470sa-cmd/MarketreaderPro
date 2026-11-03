@@ -33,7 +33,7 @@ jobs:
         run: npm run security:check && npm run license:audit
       - name: Audit checked-in source lines
         run: CODE_AUDIT_OUTPUT=code-audit.json npm run code:audit
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: source-line-audit
           path: code-audit.json
