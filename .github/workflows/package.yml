@@ -13,13 +13,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm install --no-audit --no-fund --ignore-scripts
+      - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: npm run verify && npm run package:check
+      - name: Generate third-party license report
+        run: npm run license:report
       - name: Build downloadable ZIP archive
         run: |
           mkdir -p dist/MarketreaderPro
           cp -R apps agent db scripts docs dist/MarketreaderPro/
-          cp package.json Dockerfile compose.yaml .env.example README.md dist/MarketreaderPro/
+          cp package.json package-lock.json Dockerfile compose.yaml .env.example README.md SECURITY.md NOTICE dist/MarketreaderPro/
+          cp dist/THIRD_PARTY_LICENSES.txt dist/MarketreaderPro/
           cd dist
           zip -qr MarketreaderPro-application.zip MarketreaderPro
       - uses: actions/upload-artifact@v4

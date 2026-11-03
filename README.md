@@ -141,10 +141,24 @@ python3 -m unittest discover -s tests_py -v
 
 CI also validates PostgreSQL migrations, a Docker build, and HTTP smoke tests. A passing build does not guarantee an external data provider is reachable in your location or license every global exchange.
 
+## Security, privacy and legal
+
+- [Security policy and vulnerability disclosure](SECURITY.md)
+- [GitHub account and repository hardening checklist](docs/GITHUB_HARDENING.md)
+- [Legal, licensing and data-compliance notes](docs/COMPLIANCE.md)
+- [Third-party attribution](NOTICE)
+
+Credential scanning, dependency auditing and license checks run on every push:
+`npm run security:check` fails if tracked files contain key material, `npm run
+license:audit` fails on non-permissive dependency licenses, and `npm run
+license:report` writes the full third-party license texts for distribution.
+Dependencies install from a committed lockfile (`npm ci`), and CodeQL plus
+`npm audit` run in the Security workflow.
+
 ## Financial safety and product scope
 
 This is a **read-only research application**. Real-money trading, banking transfers, every global exchange/news channel, complete House PDF trading extraction and automated Senate disclosure ingestion are **not supported**. Experimental accounts and integrations are disabled by default. Source articles, filings and prices may be inaccurate or delayed; verify originals before making financial decisions.
 
-The app is ready to download and run locally with its prerequisites, but a publicly deployed or independently audited financial platform is a different release milestone.
+The app is ready to download and run locally with its prerequisites, but a publicly deployed or independently audited financial platform is a different release milestone. The software is provided without warranty, and nothing in it is financial, legal or tax advice; see the [legal and compliance notes](docs/COMPLIANCE.md).
 
 [Deployment checklist](docs/PRODUCTION_RELEASE.md) · [Setup](docs/QUICKSTART.md) · [GitHub Actions](https://github.com/samadalam481470sa-cmd/MarketreaderPro/actions)

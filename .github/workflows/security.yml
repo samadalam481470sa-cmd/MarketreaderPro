@@ -1,0 +1,65 @@
+name: Security
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '27 6 * * 1'
+permissions:
+  contents: read
+jobs:
+  codeql:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [javascript-typescript, python]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended
+      - uses: github/codeql-action/analyze@v3
+
+  supply-chain:
+    name: Dependency and repository checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install from the committed lockfile
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Scan tracked files for secret material
+        run: npm run security:check
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+      - name: Check dependency licenses are permissive
+        run: npm run license:audit
+      - name: Verify the installed production tree matches the lockfile
+        run: npm ls --omit=dev --all >/dev/null
+
+  dependency-review:
+    name: Dependency review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: on-failure

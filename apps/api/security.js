@@ -3,8 +3,11 @@ export const SECURITY_HEADERS=Object.freeze({
   'X-Content-Type-Options':'nosniff',
   'Referrer-Policy':'no-referrer',
   'X-Frame-Options':'DENY',
+  'X-Permitted-Cross-Domain-Policies':'none',
   'Permissions-Policy':'camera=(), microphone=(), geolocation=(), payment=()',
   'Cross-Origin-Resource-Policy':'same-origin',
+  'Cross-Origin-Opener-Policy':'same-origin',
+  'Strict-Transport-Security':'max-age=15552000',
   'Content-Security-Policy':"default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; upgrade-insecure-requests"
 });
 export function json(res,status,data,headers={}){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store',...SECURITY_HEADERS,...headers});res.end(JSON.stringify(data))}

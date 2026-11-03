@@ -2,6 +2,7 @@ node_modules/
 .env
 .env.*
 !.env.example
+.dev.vars
 coverage/
 __pycache__/
 *.pyc
@@ -10,3 +11,11 @@ __pycache__/
 *.sqlite3-shm
 *.sqlite3-wal
 research-proposals/
+dist/
+*.log
+*.pem
+*.key
+*.p12
+.DS_Store
+code-audit.json
+THIRD_PARTY_LICENSES.txt

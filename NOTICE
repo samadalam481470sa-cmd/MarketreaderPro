@@ -1,0 +1,43 @@
+MarketreaderPro
+Copyright (c) 2026 the MarketreaderPro authors. All rights reserved.
+
+This repository does not currently include an open-source license file. In the
+absence of one, default copyright applies: no permission is granted to copy,
+modify or redistribute this project except as allowed by law or by a separate
+written agreement with the copyright holder. Choosing and adding a license is a
+decision for the owner; see docs/COMPLIANCE.md.
+
+Third-party components used at runtime
+
+  technicalindicators  MIT license        https://github.com/anandanand84/technicalindicators
+  pg (node-postgres)   MIT license        https://github.com/brianc/node-postgres
+  fast-xml-parser      MIT license        https://github.com/NaturalIntelligence/fast-xml-parser
+  PostgreSQL           PostgreSQL License https://www.postgresql.org/about/licence/
+  Node.js              MIT license        https://nodejs.org/
+
+These components are consumed as installed dependencies and are not vendored
+into this repository. Their copyright notices and license texts remain with
+their authors. Generate a full inventory, including the license text of every
+installed production dependency, with:
+
+  npm install
+  npm run license:report     # writes dist/THIRD_PARTY_LICENSES.txt
+
+Distributed archives must keep this NOTICE file, the generated third-party
+license report and the upstream license files from installed packages.
+
+Data and content
+
+  Data retrieved from SEC EDGAR, the Federal Reserve, the Bureau of Labor
+  Statistics, GDELT, Kalshi, Polymarket, Plaid and other providers remains
+  subject to those providers' terms of use and is not relicensed by this
+  project. Historical price files imported by an operator are the operator's
+  responsibility; import only data you are permitted to use and redistribute.
+
+  "Kalshi", "Polymarket", "Plaid", "PostgreSQL" and other names are trademarks
+  of their respective owners. They are used descriptively to identify
+  integrations. No endorsement, sponsorship or affiliation is implied.
+
+This software is provided for research and educational purposes, without
+warranty of any kind, and is not financial, legal, tax or investment advice.
+See docs/COMPLIANCE.md and the disclaimer in README.md.

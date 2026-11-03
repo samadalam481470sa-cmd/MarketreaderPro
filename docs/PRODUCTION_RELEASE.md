@@ -3,6 +3,13 @@
 ## Bounded release scope
 This is a **public educational research web application**, not a production bank, brokerage or financial adviser. No live orders or transfers are available. `ENABLE_EXPERIMENTAL_FEATURES=false` by default; all user accounts, bank aggregation, paper orders and optional AI completion routes return 503 in this mode.
 
+## Security and compliance gates
+- `SECURITY.md` defines how to report vulnerabilities privately. Enable private vulnerability reporting in GitHub so the intake works.
+- `docs/GITHUB_HARDENING.md` covers account 2FA, secret scanning, push protection, branch protection and least-privilege Actions.
+- `docs/COMPLIANCE.md` lists the legal hazards this project cannot remove: financial-promotion language, data-provider terms, privacy duties, licensing and trademarks. Review it before any public or commercial launch.
+- CI runs `npm run security:check` (credential scan), `npm run license:audit` (permissive dependency licenses only), CodeQL and `npm audit --omit=dev --audit-level=high`. A red security workflow blocks release.
+- Containers run as the unprivileged `node` user; the Compose web service is read-only with all capabilities dropped. Keep that property when deploying.
+
 ## Deploying the public research site
 - Use a container host supporting a persistent Node.js process. Vercel serverless hosting is not directly compatible with this repository's existing HTTP server and separately running GPU desktop process.
 - Build a reviewed CI-passing commit: `docker build -t marketreaderpro:release .`.

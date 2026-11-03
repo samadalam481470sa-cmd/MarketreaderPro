@@ -27,8 +27,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm install --no-audit --no-fund
+      - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: npm run verify
+      - name: Credential and dependency license gates
+        run: npm run security:check && npm run license:audit
       - name: Audit checked-in source lines
         run: CODE_AUDIT_OUTPUT=code-audit.json npm run code:audit
       - uses: actions/upload-artifact@v4

@@ -1,8 +1,8 @@
 FROM node:22-alpine
 ENV NODE_ENV=production PORT=3000
 WORKDIR /app
-COPY --chown=node:node package.json ./
-RUN npm install --omit=dev --ignore-scripts --no-audit --no-fund
+COPY --chown=node:node package.json package-lock.json ./
+RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 COPY --chown=node:node apps ./apps
 COPY --chown=node:node db ./db
 COPY --chown=node:node scripts ./scripts
